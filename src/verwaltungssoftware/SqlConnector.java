@@ -309,6 +309,7 @@ public class SqlConnector implements ISql {
             stmtUpdateArtikel.setString(2, eingabe);
             stmtUpdateArtikel.setString(3, id);
             stmtUpdateArtikel.executeUpdate();
+            System.out.println("testcommit");
         } catch (SQLException exc) {
             throw exc;
         }
