@@ -64,7 +64,7 @@ public class SqlConnector implements ISql {
                         rsKunde.getString("name"),
                         rsKunde.getString("straße"),
                         rsKunde.getString("hausnummer"),
-                        rsKunde.getString("Postleitzahl"),
+                        rsKunde.getString("plz"),
                         rsKunde.getString("ort"),
                         rsKunde.getString("land")));
             }
@@ -81,10 +81,19 @@ public class SqlConnector implements ISql {
                 ResultSet rsAngebot = stmtAngebot.executeQuery("select * from angebot")) {
 
             while (rsAngebot.next()) {
-                gui.getDataAngebot().add(new Angebot(
-                        rsAngebot.getString("angebotsnummer"),
-                        rsAngebot.getString("kunde"),
-                        rsAngebot.getString("datum")));
+                if (rsAngebot.getString("akzeptiert").equals("0")) {
+                    gui.getDataAngebot().add(new Angebot(
+                            rsAngebot.getString("angebotsnummer"),
+                            rsAngebot.getString("kunde"),
+                            rsAngebot.getString("datum"),
+                            "noch ausstehend/nein"));
+                } else {
+                    gui.getDataAngebot().add(new Angebot(
+                            rsAngebot.getString("angebotsnummer"),
+                            rsAngebot.getString("kunde"),
+                            rsAngebot.getString("datum"),
+                            "ja/Rechnung erstellt"));
+                }
             }
         } catch (SQLException exc) {
             throw exc;

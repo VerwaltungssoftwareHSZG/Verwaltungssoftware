@@ -215,10 +215,14 @@ public class Gui extends Application {
         datum.setCellValueFactory(
                 new PropertyValueFactory<>("datum"));
 
+        TableColumn akzeptiert = new TableColumn("Akzeptiert?");
+        akzeptiert.setCellValueFactory(
+                new PropertyValueFactory<>("akzeptiert"));
+        
         tableAngebot.setOnMouseClicked((MouseEvent me) -> {
             if (me.getClickCount() == 2) {
                 String nummer = tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer();
-                System.out.println(nummer);
+                //System.out.println(nummer);
                 try {
                     sql.loadArtikelFromAngebot(nummer);
                 } catch (SQLException exc) {
@@ -311,7 +315,7 @@ public class Gui extends Application {
 
         tableAngebot.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableAngebot.setItems(dataAngebot);
-        tableAngebot.getColumns().addAll(angebotsnummer, kunde, datum);
+        tableAngebot.getColumns().addAll(angebotsnummer, kunde, datum, akzeptiert);
     }
 
     public static void main(String[] args) {
