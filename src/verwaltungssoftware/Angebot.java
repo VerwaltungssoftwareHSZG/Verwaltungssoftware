@@ -6,7 +6,6 @@ public class Angebot {
 
     private final SimpleStringProperty angebotsnummer, kunde, datum, akzeptiert;
     //private final ArrayList<Artikel> waren;
-    int penis2 = 1;
     
     Angebot(String aNummer, String k, String date, String a) {
         angebotsnummer = new SimpleStringProperty(aNummer);
