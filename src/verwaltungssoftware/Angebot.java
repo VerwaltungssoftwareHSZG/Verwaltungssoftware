@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleStringProperty;
 public class Angebot {
 
     private final SimpleStringProperty angebotsnummer, kunde, datum, akzeptiert;
+    int penis = 5;
     //private final ArrayList<Artikel> waren;
     
     Angebot(String aNummer, String k, String date, String a) {
