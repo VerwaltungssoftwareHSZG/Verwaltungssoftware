@@ -1,5 +1,6 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.database;
 
+import com.verwaltungssoftware.objects.Artikel;
 import java.sql.SQLException;
 import java.util.ArrayList;
 

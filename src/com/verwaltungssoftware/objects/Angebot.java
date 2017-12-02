@@ -1,4 +1,4 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.objects;
 
 import javafx.beans.property.SimpleStringProperty;
 
@@ -7,7 +7,7 @@ public class Angebot {
     private final SimpleStringProperty angebotsnummer, kunde, datum, akzeptiert;
     //private final ArrayList<Artikel> waren;
     
-    Angebot(String aNummer, String k, String date, String a) {
+    public Angebot(String aNummer, String k, String date, String a) {
         angebotsnummer = new SimpleStringProperty(aNummer);
         kunde = new SimpleStringProperty(k);
         datum = new SimpleStringProperty(date);

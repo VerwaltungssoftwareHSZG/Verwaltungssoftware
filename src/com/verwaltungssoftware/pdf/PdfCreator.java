@@ -1,5 +1,9 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.pdf;
 
+import com.verwaltungssoftware.database.SqlConnector;
+import com.verwaltungssoftware.objects.User;
+import com.verwaltungssoftware.objects.Kunde;
+import com.verwaltungssoftware.objects.Artikel;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;
 import java.io.FileOutputStream;
@@ -12,6 +16,7 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.verwaltungssoftware.main.Gui;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
@@ -73,7 +78,7 @@ public class PdfCreator implements IPdf{
             PdfPCell kundeAdresseStrasse;
             PdfPCell kundeAdressePlz;
             //suche nach dem Kunden für Adresszeile
-            for (Kunde k : gui.getDataKunde()) {
+            for (Kunde k : sql.getDataKunde()) {
                 if (k.getKundennummer().equals(kundennummer)) {
                     kundeAdresseName = new PdfPCell(new Paragraph(k.getVorname() + " " + k.getName(), adresseFont));
                     kundeAdresseStrasse = new PdfPCell(new Paragraph(k.getStraße() + " " + k.getHausnummer(), adresseFont));
@@ -130,7 +135,7 @@ public class PdfCreator implements IPdf{
             double menge;
             double gesamtpreis;
             double endpreis = 0;
-            for (Artikel a : gui.getDataArtikelInAngebot()) {
+            for (Artikel a : sql.getDataArtikelInAngebot()) {
                 table.addCell("#" + count);
                 table.addCell(a.getArtikelnummer());
                 table.addCell(a.getBezeichnung() + "\n" + a.getZusatztext());

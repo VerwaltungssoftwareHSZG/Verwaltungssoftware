@@ -1,5 +1,8 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.database;
 
+import com.verwaltungssoftware.objects.Kunde;
+import com.verwaltungssoftware.objects.Artikel;
+import com.verwaltungssoftware.objects.Angebot;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -8,17 +11,41 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Properties;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class SqlConnector implements ISql {
 
-    Gui gui;
     Properties userInfo;
+    private final ObservableList<Artikel> dataArtikel;
+    private final ObservableList<Kunde> dataKunde;
+    private final ObservableList<Angebot> dataAngebot;
+    private final ObservableList<Artikel> dataArtikelInAngebot;
 
-    public SqlConnector(Gui g) {
-        gui = g;
+    public SqlConnector() {
         userInfo = new Properties();
         userInfo.put("user", "root");
         userInfo.put("password", "databasemarcel");
+        dataArtikel = FXCollections.observableArrayList();
+        dataKunde = FXCollections.observableArrayList();
+        dataAngebot = FXCollections.observableArrayList();
+        dataArtikelInAngebot = FXCollections.observableArrayList();
+    }
+
+    public ObservableList<Artikel> getDataArtikel() {
+        return dataArtikel;
+    }
+
+    public ObservableList<Kunde> getDataKunde() {
+        return dataKunde;
+    }
+
+    public ObservableList<Angebot> getDataAngebot() {
+        return dataAngebot;
+    }
+
+    public ObservableList<Artikel> getDataArtikelInAngebot() {
+        return dataArtikelInAngebot;
     }
 
     //statements und resultssets schließen
@@ -31,7 +58,7 @@ public class SqlConnector implements ISql {
 
             while (rsArtikel.next()) {
 
-                gui.getDataArtikel().add(new Artikel(
+                dataArtikel.add(new Artikel(
                         rsArtikel.getString("Artikelnummer"),
                         rsArtikel.getString("Bezeichnung"),
                         rsArtikel.getString("Zusatztext"),
@@ -57,7 +84,7 @@ public class SqlConnector implements ISql {
                 ResultSet rsKunde = stmtKunde.executeQuery("select * from kunde join postleitzahl on kunde.postleitzahl = postleitzahl.plz")) {
 
             while (rsKunde.next()) {
-                gui.getDataKunde().add(new Kunde(
+                dataKunde.add(new Kunde(
                         rsKunde.getString("kundennummer"),
                         rsKunde.getString("anrede"),
                         rsKunde.getString("vorname"),
@@ -82,13 +109,13 @@ public class SqlConnector implements ISql {
 
             while (rsAngebot.next()) {
                 if (rsAngebot.getString("akzeptiert").equals("0")) {
-                    gui.getDataAngebot().add(new Angebot(
+                    dataAngebot.add(new Angebot(
                             rsAngebot.getString("angebotsnummer"),
                             rsAngebot.getString("kunde"),
                             rsAngebot.getString("datum"),
                             "noch ausstehend/nein"));
                 } else {
-                    gui.getDataAngebot().add(new Angebot(
+                    dataAngebot.add(new Angebot(
                             rsAngebot.getString("angebotsnummer"),
                             rsAngebot.getString("kunde"),
                             rsAngebot.getString("datum"),
@@ -108,10 +135,10 @@ public class SqlConnector implements ISql {
                 Statement stmtSearchArtikel = myConn.createStatement();
                 ResultSet rsSearchArtikel = stmtSearchArtikel.executeQuery(searchArtikelString);) {
 
-            gui.getDataArtikelInAngebot().clear();
+            dataArtikelInAngebot.clear();
 
             while (rsSearchArtikel.next()) {
-                gui.getDataArtikelInAngebot().add(new Artikel(
+                dataArtikelInAngebot.add(new Artikel(
                         rsSearchArtikel.getString("Artikelnummer"),
                         rsSearchArtikel.getString("Bezeichnung"),
                         rsSearchArtikel.getString("Zusatztext"),

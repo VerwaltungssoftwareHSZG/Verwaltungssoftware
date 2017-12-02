@@ -1,12 +1,16 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.main;
 
+import com.verwaltungssoftware.pdf.PdfCreator;
+import com.verwaltungssoftware.database.SqlConnector;
+import com.verwaltungssoftware.objects.User;
+import com.verwaltungssoftware.objects.Kunde;
+import com.verwaltungssoftware.objects.Artikel;
+import com.verwaltungssoftware.objects.Angebot;
 import com.itextpdf.text.DocumentException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
 import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
@@ -26,46 +30,23 @@ public class Gui extends Application {
     private final SqlConnector sql;
 
     private final TableView<Artikel> tableArtikel;
-    private final ObservableList<Artikel> dataArtikel;
 
     private final TableView<Kunde> tableKunde;
-    private final ObservableList<Kunde> dataKunde;
 
     private final TableView<Angebot> tableAngebot;
-    private final ObservableList<Angebot> dataAngebot;
 
     private final TableView<Artikel> tableArtikelInAngebot;
-    private final ObservableList<Artikel> dataArtikelInAngebot;
 
     public Gui() {
         user = new User("wfg", "ajsdb", "baskcbb", "scjabsc", "asckbc", "Baustoffhandel TONAS Limited", "aefeiofnef", "ksndvs", "akdnkv", "kdnc", "csdcsd", "csdv",
                 "Jahnring 6a", "02959", "Deutschland", "Schleife", "", "", "", "", "", "", "");
-        sql = new SqlConnector(this);
+        sql = new SqlConnector();
         pdf = new PdfCreator(user, this, sql);
         tableArtikel = new TableView<>();
-        dataArtikel = FXCollections.observableArrayList();
         tableKunde = new TableView<>();
-        dataKunde = FXCollections.observableArrayList();
         tableAngebot = new TableView<>();
-        dataAngebot = FXCollections.observableArrayList();
         tableArtikelInAngebot = new TableView<>();
-        dataArtikelInAngebot = FXCollections.observableArrayList();
-    }
 
-    public ObservableList<Artikel> getDataArtikel() {
-        return dataArtikel;
-    }
-
-    public ObservableList<Kunde> getDataKunde() {
-        return dataKunde;
-    }
-
-    public ObservableList<Angebot> getDataAngebot() {
-        return dataAngebot;
-    }
-
-    public ObservableList<Artikel> getDataArtikelInAngebot() {
-        return dataArtikelInAngebot;
     }
 
     @Override
@@ -155,7 +136,7 @@ public class Gui extends Application {
                 new PropertyValueFactory<>("datum"));
 
         tableArtikel.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableArtikel.setItems(dataArtikel);
+        tableArtikel.setItems(sql.getDataArtikel());
         tableArtikel.getColumns().addAll(artikelnummer, bezeichnung, zusatztext, rabatt, skonto, zuschlag, einkaufspreis, verkaufspreis, mwst, menge, datum);
     }
 
@@ -198,7 +179,7 @@ public class Gui extends Application {
                 new PropertyValueFactory<>("land"));
 
         tableKunde.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableKunde.setItems(dataKunde);
+        tableKunde.setItems(sql.getDataKunde());
         tableKunde.getColumns().addAll(kundennummer, vorname, name, straße, hausnummer, plz, ort, land);
     }
 
@@ -218,11 +199,11 @@ public class Gui extends Application {
         TableColumn akzeptiert = new TableColumn("Akzeptiert?");
         akzeptiert.setCellValueFactory(
                 new PropertyValueFactory<>("akzeptiert"));
-        
+
         tableAngebot.setOnMouseClicked((MouseEvent me) -> {
             if (me.getClickCount() == 2) {
                 String nummer = tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer();
-                //System.out.println(nummer);
+                System.out.println(nummer);
                 try {
                     sql.loadArtikelFromAngebot(nummer);
                 } catch (SQLException exc) {
@@ -274,7 +255,7 @@ public class Gui extends Application {
                         new PropertyValueFactory<>("datum"));
 
                 tableArtikelInAngebot.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-                tableArtikelInAngebot.setItems(dataArtikelInAngebot);
+                tableArtikelInAngebot.setItems(sql.getDataArtikelInAngebot());
                 tableArtikelInAngebot.getColumns().addAll(artikelnummer, bezeichnung, zusatztext, rabatt, skonto, zuschlag, einkaufspreis, verkaufspreis, mwst, menge, datumA);
 
                 Stage stage = new Stage();
@@ -314,7 +295,7 @@ public class Gui extends Application {
         });
 
         tableAngebot.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableAngebot.setItems(dataAngebot);
+        tableAngebot.setItems(sql.getDataAngebot());
         tableAngebot.getColumns().addAll(angebotsnummer, kunde, datum, akzeptiert);
     }
 

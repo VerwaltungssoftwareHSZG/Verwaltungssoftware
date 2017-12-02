@@ -1,4 +1,4 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.objects;
 
 import javafx.beans.property.SimpleStringProperty;
 

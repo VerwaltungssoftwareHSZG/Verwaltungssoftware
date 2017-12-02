@@ -1,4 +1,4 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.objects;
 
 import javafx.beans.property.SimpleStringProperty;
 
@@ -6,7 +6,7 @@ public class Kunde {
 
     SimpleStringProperty kundennummer, anrede, vorname, name, straße, hausnummer, plz, ort, land;
 
-    Kunde(String kNummer, String a, String vn, String n, String s, String h, String p, String o, String l) {
+    public Kunde(String kNummer, String a, String vn, String n, String s, String h, String p, String o, String l) {
         kundennummer = new SimpleStringProperty(kNummer);
         anrede = new SimpleStringProperty(a);
         vorname = new SimpleStringProperty(vn);

@@ -1,4 +1,4 @@
-package verwaltungssoftware;
+package com.verwaltungssoftware.objects;
 
 public class User {
 
