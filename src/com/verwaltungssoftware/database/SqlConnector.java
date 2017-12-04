@@ -22,6 +22,8 @@ public class SqlConnector implements ISql {
     private ObservableList<Angebot> dataAngebot;
     private ObservableList<Artikel> dataArtikelInAngebot;
     private ObservableList<Kunde> dataFilteredKunde;
+    private ObservableList<Angebot> dataFilteredAngebot;
+    private ObservableList<Artikel> dataFilteredArtikel;
 
     public SqlConnector() {
         userInfo = new Properties();
@@ -32,6 +34,8 @@ public class SqlConnector implements ISql {
         dataAngebot = FXCollections.observableArrayList();
         dataArtikelInAngebot = FXCollections.observableArrayList();
         dataFilteredKunde = FXCollections.observableArrayList();
+        dataFilteredAngebot = FXCollections.observableArrayList();
+        dataFilteredArtikel = FXCollections.observableArrayList();
     }
 
     public ObservableList<Artikel> getDataArtikel() {
@@ -52,6 +56,14 @@ public class SqlConnector implements ISql {
 
     public ObservableList<Kunde> getDataFilteredKunde() {
         return dataFilteredKunde;
+    }
+
+    public ObservableList<Angebot> getDataFilteredAngebot() {
+        return dataFilteredAngebot;
+    }
+
+    public ObservableList<Artikel> getDataFilteredArtikel() {
+        return dataFilteredArtikel;
     }
 
     //statements und resultssets schließen
@@ -89,6 +101,8 @@ public class SqlConnector implements ISql {
         try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
                 Statement stmtKunde = myConn.createStatement();
                 ResultSet rsKunde = stmtKunde.executeQuery("select * from kunde join postleitzahl on kunde.postleitzahl = postleitzahl.plz")) {
+
+            dataKunde.clear();
 
             while (rsKunde.next()) {
                 dataKunde.add(new Kunde(
@@ -165,7 +179,8 @@ public class SqlConnector implements ISql {
     }
 
     public void loadFilteredKunden(String filter) throws SQLException {
-        String searchKundeString = "select * from kunde join postleitzahl on kunde.postleitzahl = postleitzahl.plz where vorname like ?;";
+        String searchKundeString = "select * from kunde join postleitzahl on kunde.postleitzahl = postleitzahl.plz where vorname like ? or name like ? or kundennummer like ? or "
+                + "straße like ? or kunde.postleitzahl like ? or ort like ? or land like ?;";
         ResultSet rsSearchKunde = null;
 
         try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
@@ -174,6 +189,12 @@ public class SqlConnector implements ISql {
             dataFilteredKunde.clear();
 
             stmtSearchKunde.setString(1, "%" + filter + "%");
+            stmtSearchKunde.setString(2, "%" + filter + "%");
+            stmtSearchKunde.setString(3, "%" + filter + "%");
+            stmtSearchKunde.setString(4, "%" + filter + "%");
+            stmtSearchKunde.setString(5, "%" + filter + "%");
+            stmtSearchKunde.setString(6, "%" + filter + "%");
+            stmtSearchKunde.setString(7, "%" + filter + "%");
             rsSearchKunde = stmtSearchKunde.executeQuery();
 
             while (rsSearchKunde.next()) {
@@ -188,15 +209,89 @@ public class SqlConnector implements ISql {
                         rsSearchKunde.getString("ort"),
                         rsSearchKunde.getString("land")));
             }
-            if (dataFilteredKunde.isEmpty()) {
-                System.out.println("45");
-            }
 
         } catch (SQLException exc) {
             throw exc;
         } finally {
             if (rsSearchKunde != null) {
                 rsSearchKunde.close();
+            }
+        }
+    }
+
+    public void loadFilteredAngebote(String filter) throws SQLException {
+        String searchAngebotString = "select * from angebot where angebotsnummer like ? or kunde like ? or datum like ? or akzeptiert like ?;";
+        ResultSet rsSearchAngebot = null;
+
+        try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
+                PreparedStatement stmtSearchAngebot = myConn.prepareStatement(searchAngebotString)) {
+
+            dataFilteredAngebot.clear();
+
+            stmtSearchAngebot.setString(1, "%" + filter + "%");
+            stmtSearchAngebot.setString(2, "%" + filter + "%");
+            stmtSearchAngebot.setString(3, "%" + filter + "%");
+            stmtSearchAngebot.setString(4, "%" + filter + "%");
+            rsSearchAngebot = stmtSearchAngebot.executeQuery();
+
+            while (rsSearchAngebot.next()) {
+                if (rsSearchAngebot.getString("akzeptiert").equals("0")) {
+                    dataFilteredAngebot.add(new Angebot(
+                            rsSearchAngebot.getString("angebotsnummer"),
+                            rsSearchAngebot.getString("kunde"),
+                            rsSearchAngebot.getString("datum"),
+                            "noch ausstehend/nein"));
+                } else {
+                    dataFilteredAngebot.add(new Angebot(
+                            rsSearchAngebot.getString("angebotsnummer"),
+                            rsSearchAngebot.getString("kunde"),
+                            rsSearchAngebot.getString("datum"),
+                            "ja/Rechnung erstellt"));
+                }
+            }
+
+        } catch (SQLException exc) {
+            throw exc;
+        } finally {
+            if (rsSearchAngebot != null) {
+                rsSearchAngebot.close();
+            }
+        }
+    }
+
+    public void loadFilteredArtikel(String filter) throws SQLException {
+        String searchArtikelString = "select * from artikel where artikelnummer like ? or bezeichnung like ?";
+        ResultSet rsSearchArtikel = null;
+
+        try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
+                PreparedStatement stmtSearchArtikel = myConn.prepareStatement(searchArtikelString)) {
+
+            dataFilteredArtikel.clear();
+
+            stmtSearchArtikel.setString(1, "%" + filter + "%");
+            stmtSearchArtikel.setString(2, "%" + filter + "%");
+            rsSearchArtikel = stmtSearchArtikel.executeQuery();
+
+            while (rsSearchArtikel.next()) {
+                dataFilteredArtikel.add(new Artikel(
+                        rsSearchArtikel.getString("Artikelnummer"),
+                        rsSearchArtikel.getString("Bezeichnung"),
+                        rsSearchArtikel.getString("Zusatztext"),
+                        rsSearchArtikel.getString("Rabatt"),
+                        rsSearchArtikel.getString("Skonto"),
+                        rsSearchArtikel.getString("Zuschlag"),
+                        rsSearchArtikel.getString("Einkaufspreis"),
+                        rsSearchArtikel.getString("Verkaufspreis"),
+                        rsSearchArtikel.getString("Mwst"),
+                        rsSearchArtikel.getString("Menge"),
+                        rsSearchArtikel.getString("Datum")));
+            }
+
+        } catch (SQLException exc) {
+            throw exc;
+        } finally {
+            if (rsSearchArtikel != null) {
+                rsSearchArtikel.close();
             }
         }
     }

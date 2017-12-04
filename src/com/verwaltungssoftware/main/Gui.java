@@ -83,7 +83,6 @@ public class Gui extends Application {
                     tableKunde.setItems(sql.getDataKunde());
                 } else {
                     sql.loadFilteredKunden(tf.getText());
-                    tableKunde.getItems().clear();
                     tableKunde.setItems(sql.getDataFilteredKunde());
                 }
             } catch (SQLException ex) {
