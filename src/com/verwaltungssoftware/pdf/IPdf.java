@@ -12,9 +12,9 @@ import java.sql.SQLException;
 
 public interface IPdf {
 
-    public void createDocument(String kunde, String angebot, File f) throws DocumentException, FileNotFoundException, SQLException;
+    public void createDocument(String kunde, String angebot, String datum, File f) throws DocumentException, FileNotFoundException, SQLException;
 
-    public void loadHeaderData(String kundennummer, File file) throws DocumentException, FileNotFoundException;
+    public void loadHeaderData(String kundennummer, String angebot, String datum, File file) throws DocumentException, FileNotFoundException;
     
     public void loadTableData(String angebotsnummer) throws SQLException, DocumentException;
     

@@ -27,5 +27,11 @@ public interface ISql {
     public void updateKunde(String attr, String id, String eingabe) throws SQLException;
 
     public void updateArtikel(String attr, String id, String eingabe) throws SQLException;
+    
+    public void loadFilteredAngebote(String filter) throws SQLException;
+    
+    public void loadFilteredKunden(String filter) throws SQLException;
+    
+    public void loadFilteredArtikel(String filter) throws SQLException;
 
 }

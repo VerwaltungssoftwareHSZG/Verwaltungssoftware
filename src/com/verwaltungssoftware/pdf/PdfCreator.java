@@ -13,15 +13,17 @@ import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.draw.VerticalPositionMark;
 import com.verwaltungssoftware.main.Gui;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
 
-public class PdfCreator implements IPdf{
+public class PdfCreator implements IPdf {
 
     private Document document;
     private User user;
@@ -36,14 +38,17 @@ public class PdfCreator implements IPdf{
     }
 
     @Override
-    public void createDocument(String kunde, String angebot, File f) throws DocumentException, FileNotFoundException, SQLException{
+    public void createDocument(String kunde, String angebot, String datum, File f) throws DocumentException, FileNotFoundException, SQLException {
+        if(document.isOpen() == false){
+            document = new Document();
+        }
         try {
             File file = f;
             PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(file)); //irrelevant ob \\ oder /
             //PdfWriter writer = PdfCreator.getInstance(document, new FileOutputStream(System.getProperty("user.home") + "/Desktop/blabla.pdf"));
             document.open();
 
-            loadHeaderData(kunde, file);
+            loadHeaderData(kunde, angebot, datum, file);
             loadTableData(angebot);
 
             document.close();
@@ -54,29 +59,52 @@ public class PdfCreator implements IPdf{
     }
 
     @Override
-    public void loadHeaderData(String kundennummer, File file) throws DocumentException, FileNotFoundException{
+    public void loadHeaderData(String kundennummer, String angebotsnummer, String datum, File file) throws DocumentException, FileNotFoundException {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(file));
 
             document.open();
 
+            Font chapterFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            PdfPTable company = new PdfPTable(1);
+            company.setHorizontalAlignment(Element.ALIGN_CENTER);
+            company.setWidthPercentage(100);
+            Chunk chunk1 = new Chunk(user.getCompany(), chapterFont);
+            Paragraph paragraph1 = new Paragraph(chunk1);
+            PdfPCell companyC1 = new PdfPCell(paragraph1);
+            Font infoFont = FontFactory.getFont(FontFactory.HELVETICA, 7);
+            PdfPCell companyC2 = new PdfPCell(new Paragraph("Tel. " + user.getaTel() + ",   " + "Fax: " + user.getaFax(), infoFont));
+            PdfPCell companyC3 = new PdfPCell(new Paragraph("Geschäftsführer : " + user.getPreName() + " " + user.getLastName() + ",    " + user.getaAmt() + " " + user.getaHrb(), infoFont));
+            PdfPCell fill1 = new PdfPCell(new Paragraph(" "));
+
+            companyC1.setBorderColor(BaseColor.WHITE);
+            companyC2.setBorderColor(BaseColor.WHITE);
+            companyC3.setBorderColor(BaseColor.WHITE);
+            fill1.setBorderColor(BaseColor.WHITE);
+            company.addCell(companyC1);
+            company.addCell(companyC2);
+            company.addCell(companyC3);
+            company.addCell(fill1);
+            document.add(company);
+
+            //AdresssTable
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA, 6);
-            PdfPTable adresse = new PdfPTable(1);
-            adresse.setHorizontalAlignment(Element.ALIGN_LEFT);
-            adresse.setWidthPercentage(40);
+            PdfPTable adresseTable = new PdfPTable(1);
+            adresseTable.setHorizontalAlignment(Element.ALIGN_LEFT);
+            adresseTable.setWidthPercentage(40);
             Chunk d = new Chunk(user.getCompany() + " · " + user.getaStreet() + " · " + user.getaPlz() + " " + user.getaOrt());
             d.setUnderline(0.1f, -2f);
             d.setFont(titleFont);
             Paragraph p = new Paragraph(d);
-            PdfPCell absenderAdresse = new PdfPCell(new Paragraph(p));
-
+            PdfPCell absenderAdresse = new PdfPCell(p);
             absenderAdresse.setBorderColor(BaseColor.WHITE);
             absenderAdresse.setHorizontalAlignment(Element.ALIGN_LEFT);
-            adresse.addCell(absenderAdresse);
+            adresseTable.addCell(absenderAdresse);
             Font adresseFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
             PdfPCell kundeAdresseName;
             PdfPCell kundeAdresseStrasse;
             PdfPCell kundeAdressePlz;
+
             //suche nach dem Kunden für Adresszeile
             for (Kunde k : sql.getDataKunde()) {
                 if (k.getKundennummer().equals(kundennummer)) {
@@ -86,12 +114,72 @@ public class PdfCreator implements IPdf{
                     kundeAdresseName.setBorderColor(BaseColor.WHITE);
                     kundeAdresseStrasse.setBorderColor(BaseColor.WHITE);
                     kundeAdressePlz.setBorderColor(BaseColor.WHITE);
-                    adresse.addCell(kundeAdresseName);
-                    adresse.addCell(kundeAdresseStrasse);
-                    adresse.addCell(kundeAdressePlz);
+                    adresseTable.addCell(kundeAdresseName);
+                    adresseTable.addCell(kundeAdresseStrasse);
+                    adresseTable.addCell(kundeAdressePlz);
                 }
             }
-            document.add(adresse);
+
+            PdfPCell filler3 = new PdfPCell(new Paragraph(" "));
+            filler3.setBorderColor(BaseColor.WHITE);
+            //adresseTable.addCell(filler3);
+
+            //AngebotTable
+            Font angebotFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            Font boxInfoFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+            PdfPTable angebotTable = new PdfPTable(1);
+            PdfPCell cA = new PdfPCell(new Paragraph("Angebot", angebotFont));
+            cA.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cA.setUseVariableBorders(true);
+            angebotTable.addCell(cA);
+            
+            PdfPCell cANummer = new PdfPCell();
+            Chunk chAnummer = new Chunk(new VerticalPositionMark());
+            Phrase pAnummer = new Phrase();
+            pAnummer.setFont(boxInfoFont);
+            pAnummer.add("Angebotsnummer:");
+            pAnummer.add(chAnummer);
+            pAnummer.add(angebotsnummer);
+            cANummer.setPhrase(pAnummer);
+            cANummer.setUseVariableBorders(true);
+            cANummer.setBorderColorBottom(BaseColor.WHITE);
+            angebotTable.addCell(cANummer);
+            
+            PdfPCell cADatum = new PdfPCell();
+            Chunk chDatum = new Chunk(new VerticalPositionMark());
+            Phrase pDatum = new Phrase();
+            pDatum.setFont(boxInfoFont);
+            pDatum.add("Datum:");
+            pDatum.add(chDatum);
+            pDatum.add(datum);
+            cADatum.setPhrase(pDatum);
+            cADatum.setUseVariableBorders(true);
+            cADatum.setBorderColorTop(BaseColor.WHITE);
+            cADatum.setBorderColorBottom(BaseColor.WHITE);
+            angebotTable.addCell(cADatum);
+            
+            PdfPCell cAKunde = new PdfPCell();
+            Chunk chKunde = new Chunk(new VerticalPositionMark());
+            Phrase pKunde = new Phrase();
+            pKunde.setFont(boxInfoFont);
+            pKunde.add("Ihre Kundennummer:");
+            pKunde.add(chKunde);
+            pKunde.add(kundennummer);
+            cAKunde.setPhrase(pKunde);
+            cAKunde.setUseVariableBorders(true);
+            cAKunde.setBorderColorTop(BaseColor.WHITE);
+            angebotTable.addCell(cAKunde);
+
+            //outerTable
+            float[] outerTableWidth = {1, 1};
+            PdfPTable outerTable = new PdfPTable(outerTableWidth);
+            outerTable.setWidthPercentage(100);
+            outerTable.getDefaultCell().setBorderColor(BaseColor.WHITE);
+            outerTable.setSpacingAfter(11f);
+            outerTable.addCell(adresseTable);
+            outerTable.addCell(angebotTable);
+
+            document.add(outerTable);
 
         } catch (DocumentException | FileNotFoundException e2) {
             throw e2;
@@ -99,7 +187,7 @@ public class PdfCreator implements IPdf{
     }
 
     @Override
-    public void loadTableData(String angebotsnummer) throws SQLException, DocumentException{
+    public void loadTableData(String angebotsnummer) throws SQLException, DocumentException {
         try {
             float[] est = {1.5f, 3, 5, 3, 4, 2, 4};
             PdfPTable table = new PdfPTable(est);
@@ -157,8 +245,9 @@ public class PdfCreator implements IPdf{
             throw exc;
         }
     }
-    
-    public void loadFooterData(){
-        
+
+    @Override
+    public void loadFooterData() {
+
     }
 }

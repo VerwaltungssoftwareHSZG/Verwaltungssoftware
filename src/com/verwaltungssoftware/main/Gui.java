@@ -17,7 +17,9 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -29,17 +31,18 @@ public class Gui extends Application {
     private final PdfCreator pdf;
     private final SqlConnector sql;
 
-    private final TableView<Artikel> tableArtikel;
+    private TableView<Artikel> tableArtikel;
 
-    private final TableView<Kunde> tableKunde;
+    private TableView<Kunde> tableKunde;
 
-    private final TableView<Angebot> tableAngebot;
+    private TableView<Angebot> tableAngebot;
 
-    private final TableView<Artikel> tableArtikelInAngebot;
+    private TableView<Artikel> tableArtikelInAngebot;
 
     public Gui() {
-        user = new User("wfg", "ajsdb", "baskcbb", "scjabsc", "asckbc", "Baustoffhandel TONAS Limited", "aefeiofnef", "ksndvs", "akdnkv", "kdnc", "csdcsd", "csdv",
-                "Jahnring 6a", "02959", "Deutschland", "Schleife", "", "", "", "", "", "", "");
+        user = new User("Sparkasse Oberlausitz Niederschlesien", "3100011383", "85050100", "207/146/00045", "DE 251622660", "Baustoffhandel TONAS Limited", "69 Great Hamton Street", "B18 6EW Birmingham",
+                "Registered in England and Wales", "5802531", "Urs", "Kohler",
+                "Jahnring 6a", "02959", "Deutschland", "Schleife", "0152-56840139", "035773-73297", "Sparkasse Oberlausitz Niederschlesien", "", "DE37 8505 0100 3100 0113 83", "Amtsgericht Dresden", "HRB 24647");
         sql = new SqlConnector();
         pdf = new PdfCreator(user, this, sql);
         tableArtikel = new TableView<>();
@@ -51,6 +54,9 @@ public class Gui extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        /*DateFormat dateF = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = new Date();
+        System.out.println(dateF.format(date));*/
         try {
             sql.loadDataKunde();
         } catch (SQLException exc) {
@@ -70,13 +76,29 @@ public class Gui extends Application {
         defineTableKunde();
         defineTableAngebot();
 
+        TextField tf = new TextField();
+        tf.setOnKeyReleased((KeyEvent ke) -> {
+            try {
+                if (tf.getText().isEmpty()) {
+                    sql.loadDataKunde();
+                    tableKunde.setItems(sql.getDataKunde());
+                } else {
+                    sql.loadFilteredKunden(tf.getText());
+                    tableKunde.setItems(sql.getDataFilteredKunde());
+                }
+            } catch (SQLException ex) {
+                System.out.println(ex.getMessage());
+            }
+        });
+        VBox vb = new VBox();
+        vb.getChildren().addAll(tf, tableKunde);
         TabPane tb = new TabPane();
         Tab tArtikel = new Tab("Artikel");
         Tab tKunde = new Tab("Kunden");
         Tab tAngebot = new Tab("Angebote");
         tArtikel.setContent(tableArtikel);
         tArtikel.closableProperty().set(false);
-        tKunde.setContent(tableKunde);
+        tKunde.setContent(vb);
         tKunde.closableProperty().set(false);
         tAngebot.setContent(tableAngebot);
         tAngebot.closableProperty().set(false);
@@ -86,7 +108,7 @@ public class Gui extends Application {
 
         primaryStage.setTitle("Verwaltungssoftware");
         primaryStage.setScene(scene);
-        primaryStage.setMaximized(true);
+        //primaryStage.setMaximized(true);
         primaryStage.show();
     }
 
@@ -274,7 +296,7 @@ public class Gui extends Application {
                         }
                         if (f != null) {
                             try {
-                                pdf.createDocument(tableAngebot.getSelectionModel().getSelectedItems().get(0).getKunde(), tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer(), f);
+                                pdf.createDocument(tableAngebot.getSelectionModel().getSelectedItems().get(0).getKunde(), tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer(), tableAngebot.getSelectionModel().getSelectedItems().get(0).getDatum(), f);
                             } catch (DocumentException | FileNotFoundException | SQLException exc) {
                                 System.out.println(exc.getMessage());
                             }
