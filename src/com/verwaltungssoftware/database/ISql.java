@@ -20,9 +20,9 @@ public interface ISql {
 
     public void safeNewArtikel(String aN, String bez, String z, String ra, String sk, String zu, String ePreis, String vPreis, String mwst, String m, String d) throws SQLException;
 
-    public void safeNewAngebot(String a, String k, String d, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException;
+    public void safeNewAngebot(String a, String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException;
 
-    public void safeArtikelInAngebot(String angebot, String artikel, int menge) throws SQLException;
+    public void safeArtikelInAngebot(String angebot, String artikel, int menge, boolean alt, double r) throws SQLException;
 
     public void updateKunde(String attr, String id, String eingabe) throws SQLException;
 

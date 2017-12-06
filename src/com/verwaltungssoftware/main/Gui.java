@@ -244,9 +244,9 @@ public class Gui extends Application {
                 zusatztext.setCellValueFactory(
                         new PropertyValueFactory<>("zusatztext"));
 
-                TableColumn rabatt = new TableColumn("Rabatt");
+                TableColumn rabatt = new TableColumn("%");
                 rabatt.setCellValueFactory(
-                        new PropertyValueFactory<>("rabatt"));
+                        new PropertyValueFactory<>("rabattmenge"));
 
                 TableColumn skonto = new TableColumn("Skonto");
                 skonto.setCellValueFactory(
@@ -296,7 +296,10 @@ public class Gui extends Application {
                         }
                         if (f != null) {
                             try {
-                                pdf.createDocument(tableAngebot.getSelectionModel().getSelectedItems().get(0).getKunde(), tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer(), tableAngebot.getSelectionModel().getSelectedItems().get(0).getDatum(), f);
+                                pdf.createDocument(tableAngebot.getSelectionModel().getSelectedItems().get(0).getKunde(), 
+                                        tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer(), 
+                                        tableAngebot.getSelectionModel().getSelectedItems().get(0).getDatum(),
+                                        "testhinweis ksdhflnlGNlrnnbnBBLAEOL NLLABOnNHhbtniobntrsbb nönbösrbbsrnlbibrhöbrböbsrbb", f);
                             } catch (DocumentException | FileNotFoundException | SQLException exc) {
                                 System.out.println(exc.getMessage());
                             }

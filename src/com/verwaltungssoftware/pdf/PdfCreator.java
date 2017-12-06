@@ -38,8 +38,8 @@ public class PdfCreator implements IPdf {
     }
 
     @Override
-    public void createDocument(String kunde, String angebot, String datum, File f) throws DocumentException, FileNotFoundException, SQLException {
-        if(document.isOpen() == false){
+    public void createDocument(String kunde, String angebot, String datum, String hinweis, File f) throws DocumentException, FileNotFoundException, SQLException {
+        if (document.isOpen() == false) {
             document = new Document();
         }
         try {
@@ -48,7 +48,7 @@ public class PdfCreator implements IPdf {
             //PdfWriter writer = PdfCreator.getInstance(document, new FileOutputStream(System.getProperty("user.home") + "/Desktop/blabla.pdf"));
             document.open();
 
-            loadHeaderData(kunde, angebot, datum, file);
+            loadHeaderData(kunde, angebot, datum, hinweis, file);
             loadTableData(angebot);
 
             document.close();
@@ -59,7 +59,7 @@ public class PdfCreator implements IPdf {
     }
 
     @Override
-    public void loadHeaderData(String kundennummer, String angebotsnummer, String datum, File file) throws DocumentException, FileNotFoundException {
+    public void loadHeaderData(String kundennummer, String angebotsnummer, String datum, String hinweis, File file) throws DocumentException, FileNotFoundException {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(file));
 
@@ -69,25 +69,23 @@ public class PdfCreator implements IPdf {
             PdfPTable company = new PdfPTable(1);
             company.setHorizontalAlignment(Element.ALIGN_CENTER);
             company.setWidthPercentage(100);
+            company.setSpacingAfter(11f);
             Chunk chunk1 = new Chunk(user.getCompany(), chapterFont);
             Paragraph paragraph1 = new Paragraph(chunk1);
             PdfPCell companyC1 = new PdfPCell(paragraph1);
             Font infoFont = FontFactory.getFont(FontFactory.HELVETICA, 7);
             PdfPCell companyC2 = new PdfPCell(new Paragraph("Tel. " + user.getaTel() + ",   " + "Fax: " + user.getaFax(), infoFont));
             PdfPCell companyC3 = new PdfPCell(new Paragraph("Geschäftsführer : " + user.getPreName() + " " + user.getLastName() + ",    " + user.getaAmt() + " " + user.getaHrb(), infoFont));
-            PdfPCell fill1 = new PdfPCell(new Paragraph(" "));
 
             companyC1.setBorderColor(BaseColor.WHITE);
             companyC2.setBorderColor(BaseColor.WHITE);
             companyC3.setBorderColor(BaseColor.WHITE);
-            fill1.setBorderColor(BaseColor.WHITE);
             company.addCell(companyC1);
             company.addCell(companyC2);
             company.addCell(companyC3);
-            company.addCell(fill1);
             document.add(company);
 
-            //AdresssTable
+            //AdressTable
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA, 6);
             PdfPTable adresseTable = new PdfPTable(1);
             adresseTable.setHorizontalAlignment(Element.ALIGN_LEFT);
@@ -132,7 +130,7 @@ public class PdfCreator implements IPdf {
             cA.setHorizontalAlignment(Element.ALIGN_CENTER);
             cA.setUseVariableBorders(true);
             angebotTable.addCell(cA);
-            
+
             PdfPCell cANummer = new PdfPCell();
             Chunk chAnummer = new Chunk(new VerticalPositionMark());
             Phrase pAnummer = new Phrase();
@@ -144,7 +142,7 @@ public class PdfCreator implements IPdf {
             cANummer.setUseVariableBorders(true);
             cANummer.setBorderColorBottom(BaseColor.WHITE);
             angebotTable.addCell(cANummer);
-            
+
             PdfPCell cADatum = new PdfPCell();
             Chunk chDatum = new Chunk(new VerticalPositionMark());
             Phrase pDatum = new Phrase();
@@ -157,7 +155,7 @@ public class PdfCreator implements IPdf {
             cADatum.setBorderColorTop(BaseColor.WHITE);
             cADatum.setBorderColorBottom(BaseColor.WHITE);
             angebotTable.addCell(cADatum);
-            
+
             PdfPCell cAKunde = new PdfPCell();
             Chunk chKunde = new Chunk(new VerticalPositionMark());
             Phrase pKunde = new Phrase();
@@ -181,6 +179,13 @@ public class PdfCreator implements IPdf {
 
             document.add(outerTable);
 
+            //Hinweis für Kunden
+            Paragraph pHinweis = new Paragraph(hinweis, boxInfoFont);
+            pHinweis.setAlignment(Element.ALIGN_LEFT);
+            pHinweis.setIndentationRight(200); //damit nach gewisser Länge auch ein Zeilenumbruch stattfindet
+            pHinweis.setSpacingAfter(11f);
+            document.add(pHinweis);
+
         } catch (DocumentException | FileNotFoundException e2) {
             throw e2;
         }
@@ -192,6 +197,7 @@ public class PdfCreator implements IPdf {
             float[] est = {1.5f, 3, 5, 3, 4, 2, 4};
             PdfPTable table = new PdfPTable(est);
             table.setWidthPercentage(100);
+            table.setSpacingAfter(11f);
             //table.setSpacingBefore(11f);
             //table.setSpacingAfter(11f);
 
@@ -218,29 +224,103 @@ public class PdfCreator implements IPdf {
             table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_CENTER);
             table.getDefaultCell().setPadding(5);
             sql.loadArtikelFromAngebot(angebotsnummer);
-            int count = 1;
-            double verkaufspreis;
+            int count = 1; //Nummerierung/Position des Artikels im Angebot/Rechnung
+            double verkaufspreis; //Einzelpreis
             double menge;
-            double gesamtpreis;
-            double endpreis = 0;
+            double mwstEinzeln;
+            double mwstGesamt = 0;
+            double gesamtpreis; //Verkaufspreis * Menge pro Artikel/Zeile
+            double endpreisNetto = 0;
+            double endpreisBrutto = 0;
             for (Artikel a : sql.getDataArtikelInAngebot()) {
+                /*TODO : erste if Klammer aus dieser for-Schleife ganz nach oben in die for-Schleife packen
+                alternative Artikel dadurch in eine seperate Liste speichern und am Ende in eine Seperate Tabelle packen
+                */
                 table.addCell("#" + count);
                 table.addCell(a.getArtikelnummer());
                 table.addCell(a.getBezeichnung() + "\n" + a.getZusatztext());
                 table.addCell(a.getMenge());
                 table.addCell(a.getVerkaufspreis());
-                table.addCell(a.getRabatt());
+                table.addCell(a.getRabattmenge());
                 verkaufspreis = Double.parseDouble(a.getVerkaufspreis());
                 menge = Double.parseDouble(a.getMenge());
-                gesamtpreis = verkaufspreis * menge;
-                endpreis += gesamtpreis;
+                //wenn Artikel keine Alternative, also Normalartikel ist
+                if (a.getAlternative().equals("0")) {
+                    //wenn kein Rabatt besteht
+                    if(a.getRabattmenge() == null){
+                    gesamtpreis = verkaufspreis * menge;
+                    } else{ //wenn Rabatt besteht
+                        gesamtpreis = verkaufspreis * menge * Double.parseDouble(a.getRabattmenge());
+                    }
+                } else {
+                    gesamtpreis = 0;
+                }
+                mwstEinzeln = gesamtpreis * Double.parseDouble(a.getMwst());
+                mwstGesamt += mwstEinzeln;
+                endpreisNetto += gesamtpreis;
+
                 table.addCell(String.valueOf(gesamtpreis));
                 count++;
             }
+            endpreisBrutto = endpreisNetto + mwstGesamt;
 
-            //Paragraph test = new Paragraph(String.valueOf(endpreis));
+            //Paragraph test = new Paragraph(String.valueOf(endpreisNetto));
             //document.add(test);
             document.add(table);
+
+            float[] est2 = {2, 2, 2};
+            Font fontEnde = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+            Font fontEndeWert = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            PdfPTable tableEnd = new PdfPTable(est2);
+            tableEnd.setWidthPercentage(100);
+            tableEnd.setSpacingAfter(5f);
+            PdfPCell cNetto = new PdfPCell(new Paragraph("Nettobetrag", fontEnde));
+            PdfPCell cMehrwert = new PdfPCell(new Paragraph("Mehrwertsteuer", fontEnde));
+            PdfPCell cBrutto = new PdfPCell(new Paragraph("Bruttobetrag", fontEnde));
+            cNetto.setUseVariableBorders(true);
+            cNetto.setBorderColorTop(BaseColor.WHITE);
+            cNetto.setBorderColorBottom(BaseColor.WHITE);
+            cNetto.setBorderColorRight(BaseColor.WHITE);
+            cNetto.setBorderColorLeft(BaseColor.WHITE);
+            cNetto.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            cMehrwert.setUseVariableBorders(true);
+            cMehrwert.setBorderColorTop(BaseColor.WHITE);
+            cMehrwert.setBorderColorBottom(BaseColor.WHITE);
+            cMehrwert.setBorderColorLeft(BaseColor.WHITE);
+            cMehrwert.setBorderColorRight(BaseColor.WHITE);
+            cMehrwert.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            cBrutto.setUseVariableBorders(true);
+            cBrutto.setBorderColorTop(BaseColor.WHITE);
+            cBrutto.setBorderColorBottom(BaseColor.WHITE);
+            cBrutto.setBorderColorLeft(BaseColor.WHITE);
+            cBrutto.setBorderColorRight(BaseColor.WHITE);
+            cBrutto.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tableEnd.addCell(cNetto);
+            tableEnd.addCell(cMehrwert);
+            tableEnd.addCell(cBrutto);
+            PdfPCell cNettoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisNetto), fontEndeWert));
+            PdfPCell cMehrwertWert = new PdfPCell(new Paragraph(String.valueOf(mwstGesamt), fontEndeWert));
+            PdfPCell cBruttoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisBrutto), fontEndeWert));
+            cNettoWert.setUseVariableBorders(true);
+            cNettoWert.setBackgroundColor(BaseColor.LIGHT_GRAY);
+            cNettoWert.setBorderWidth(0.5f);
+            cNettoWert.setBorderColor(BaseColor.LIGHT_GRAY);
+            cNettoWert.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            cMehrwertWert.setUseVariableBorders(true);
+            cMehrwertWert.setBackgroundColor(BaseColor.LIGHT_GRAY);
+            cMehrwertWert.setBorderWidth(0.5f);
+            cMehrwertWert.setBorderColor(BaseColor.LIGHT_GRAY);
+            cMehrwertWert.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            cBruttoWert.setUseVariableBorders(true);
+            cBruttoWert.setBackgroundColor(BaseColor.LIGHT_GRAY);
+            cBruttoWert.setBorderWidth(0.5f);
+            cBruttoWert.setBorderColor(BaseColor.LIGHT_GRAY);
+            cBruttoWert.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tableEnd.addCell(cNettoWert);
+            tableEnd.addCell(cMehrwertWert);
+            tableEnd.addCell(cBruttoWert);
+
+            document.add(tableEnd);
         } catch (SQLException | DocumentException exc) {
             throw exc;
         }

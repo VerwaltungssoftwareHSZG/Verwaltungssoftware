@@ -7,11 +7,12 @@ public class Artikel {
     private final SimpleStringProperty artikelnummer, bezeichnung,
             zusatztext, rabatt, skonto, zuschlag,
             einkaufspreis, verkaufspreis,
-            mwst, menge, datum;
+            mwst, menge, datum, 
+            alternative, rabattmenge;
 
     public Artikel(String aNummer, String bez, String extra, 
             String r, String s, String ePreis, String vPreis, 
-            String z, String m, String num, String d) {
+            String z, String m, String num, String d, String alt, String rb) {
 
         artikelnummer = new SimpleStringProperty(aNummer);
         bezeichnung = new SimpleStringProperty(bez);
@@ -24,6 +25,8 @@ public class Artikel {
         mwst = new SimpleStringProperty(m);
         menge = new SimpleStringProperty(num);
         datum = new SimpleStringProperty(d);
+        alternative = new SimpleStringProperty(alt);
+        rabattmenge = new SimpleStringProperty(rb);
     }
 
     //getter and setter
@@ -114,5 +117,20 @@ public class Artikel {
     public void setDatum(String d){
         datum.set(d);
     }
-    //
+    
+    public String getAlternative(){
+        return alternative.get();
+    }
+    
+    public void setAlternative(String a){
+        alternative.set(a);
+    }
+    
+    public String getRabattmenge(){
+        return rabattmenge.get();
+    }
+    
+    public void setRabattmenge(String rb){
+        rabattmenge.set(rb);
+    }
 }

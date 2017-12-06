@@ -87,7 +87,9 @@ public class SqlConnector implements ISql {
                         rsArtikel.getString("Verkaufspreis"),
                         rsArtikel.getString("Mwst"),
                         rsArtikel.getString("Menge"),
-                        rsArtikel.getString("Datum")));
+                        rsArtikel.getString("Datum"),
+                        null,
+                        null));
             }
 
         } catch (SQLException exc) {
@@ -163,14 +165,16 @@ public class SqlConnector implements ISql {
                         rsSearchArtikel.getString("Artikelnummer"),
                         rsSearchArtikel.getString("Bezeichnung"),
                         rsSearchArtikel.getString("Zusatztext"),
-                        rsSearchArtikel.getString("Rabatt"),
+                        rsSearchArtikel.getString("Artikel.Rabatt"),
                         rsSearchArtikel.getString("Skonto"),
                         rsSearchArtikel.getString("Zuschlag"),
                         rsSearchArtikel.getString("Einkaufspreis"),
                         rsSearchArtikel.getString("Verkaufspreis"),
                         rsSearchArtikel.getString("Mwst"),
                         rsSearchArtikel.getString("Menge"),
-                        rsSearchArtikel.getString("Datum")));
+                        rsSearchArtikel.getString("Datum"),
+                        rsSearchArtikel.getString("Alternativ"),
+                        rsSearchArtikel.getString("aia.rabatt")));
             }
 
         } catch (SQLException exc) {
@@ -280,14 +284,16 @@ public class SqlConnector implements ISql {
                         rsSearchArtikel.getString("Artikelnummer"),
                         rsSearchArtikel.getString("Bezeichnung"),
                         rsSearchArtikel.getString("Zusatztext"),
-                        rsSearchArtikel.getString("Rabatt"),
+                        rsSearchArtikel.getString("Artikel.Rabatt"),
                         rsSearchArtikel.getString("Skonto"),
                         rsSearchArtikel.getString("Zuschlag"),
                         rsSearchArtikel.getString("Einkaufspreis"),
                         rsSearchArtikel.getString("Verkaufspreis"),
                         rsSearchArtikel.getString("Mwst"),
                         rsSearchArtikel.getString("Menge"),
-                        rsSearchArtikel.getString("Datum")));
+                        rsSearchArtikel.getString("Datum"),
+                        null,
+                        null));
             }
 
         } catch (SQLException exc) {
@@ -362,7 +368,7 @@ public class SqlConnector implements ISql {
     }
 
     @Override
-    public void safeNewAngebot(String a, String k, String d, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException {
+    public void safeNewAngebot(String a, String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException {
 
         Statement stmtCheckKunde = null;
         ResultSet rsCheckKunde = null;
@@ -391,17 +397,18 @@ public class SqlConnector implements ISql {
             }
 
             if (kundeExist == true && angebotExist == false) {
-                String addStringAngebot = "insert into angebot(angebotsnummer, kunde, datum) values(?, ?, ?);";
+                String addStringAngebot = "insert into angebot(angebotsnummer, kunde, datum, akzeptiert) values(?, ?, ?, ?);";
                 stmtAddAngebot = myConn.prepareStatement(addStringAngebot);
                 stmtAddAngebot.setString(1, a);
                 stmtAddAngebot.setString(2, k);
                 stmtAddAngebot.setString(3, d);
+                stmtAddAngebot.setString(4, ak);
                 stmtAddAngebot.executeUpdate();
             }
 
             int countM = 0;
             for (Artikel it : art) {
-                safeArtikelInAngebot(a, it.getArtikelnummer(), m.get(countM));
+                safeArtikelInAngebot(a, it.getArtikelnummer(), m.get(countM), Boolean.parseBoolean(it.getAlternative()), Double.parseDouble(it.getRabattmenge()));
                 countM++;
             }
         } catch (SQLException exc) {
@@ -426,8 +433,8 @@ public class SqlConnector implements ISql {
     }
 
     @Override
-    public void safeArtikelInAngebot(String angebot, String artikel, int menge) throws SQLException {
-        String addStringArtikelInAngebot = "insert into artikelinangebot(angebot, artikel, menge) values(?, ?, ?);";
+    public void safeArtikelInAngebot(String angebot, String artikel, int menge, boolean alt, double r) throws SQLException {
+        String addStringArtikelInAngebot = "insert into artikelinangebot(angebot, artikel, menge, alternativ, rabatt) values(?, ?, ?, ?, ?);";
         String checkMengeString = "select menge from artikel join angebot on artikel.artikelnummer = angebot.artikel where angebot.artikel = ?";
         ResultSet rsCheckMenge = null;
         try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
@@ -448,6 +455,8 @@ public class SqlConnector implements ISql {
                 stmtAddArtikelInAngebot.setString(1, angebot);
                 stmtAddArtikelInAngebot.setString(2, artikel);
                 stmtAddArtikelInAngebot.setInt(3, menge);
+                stmtAddArtikelInAngebot.setBoolean(4, alt);
+                stmtAddArtikelInAngebot.setDouble(5, r);
                 stmtAddArtikelInAngebot.executeUpdate();
             }
 
