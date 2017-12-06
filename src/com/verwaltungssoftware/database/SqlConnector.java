@@ -178,6 +178,7 @@ public class SqlConnector implements ISql {
         }
     }
 
+    @Override
     public void loadFilteredKunden(String filter) throws SQLException {
         String searchKundeString = "select * from kunde join postleitzahl on kunde.postleitzahl = postleitzahl.plz where vorname like ? or name like ? or kundennummer like ? or "
                 + "straße like ? or kunde.postleitzahl like ? or ort like ? or land like ?;";
@@ -219,6 +220,7 @@ public class SqlConnector implements ISql {
         }
     }
 
+    @Override
     public void loadFilteredAngebote(String filter) throws SQLException {
         String searchAngebotString = "select * from angebot where angebotsnummer like ? or kunde like ? or datum like ? or akzeptiert like ?;";
         ResultSet rsSearchAngebot = null;
@@ -259,6 +261,7 @@ public class SqlConnector implements ISql {
         }
     }
 
+    @Override
     public void loadFilteredArtikel(String filter) throws SQLException {
         String searchArtikelString = "select * from artikel where artikelnummer like ? or bezeichnung like ?";
         ResultSet rsSearchArtikel = null;
