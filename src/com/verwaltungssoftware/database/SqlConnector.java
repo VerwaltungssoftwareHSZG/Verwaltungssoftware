@@ -20,9 +20,11 @@ public class SqlConnector implements ISql {
     private ObservableList<Artikel> dataArtikel;
     private ObservableList<Kunde> dataKunde;
     private ObservableList<Angebot> dataAngebot;
+    private ObservableList<Angebot> dataRechnung;
     private ObservableList<Artikel> dataArtikelInAngebot;
     private ObservableList<Kunde> dataFilteredKunde;
     private ObservableList<Angebot> dataFilteredAngebot;
+    private ObservableList<Angebot> dataFilteredRechnung;
     private ObservableList<Artikel> dataFilteredArtikel;
 
     public SqlConnector() {
@@ -32,9 +34,11 @@ public class SqlConnector implements ISql {
         dataArtikel = FXCollections.observableArrayList();
         dataKunde = FXCollections.observableArrayList();
         dataAngebot = FXCollections.observableArrayList();
+        dataRechnung = FXCollections.observableArrayList();
         dataArtikelInAngebot = FXCollections.observableArrayList();
         dataFilteredKunde = FXCollections.observableArrayList();
         dataFilteredAngebot = FXCollections.observableArrayList();
+        dataFilteredRechnung = FXCollections.observableArrayList();
         dataFilteredArtikel = FXCollections.observableArrayList();
     }
 
@@ -44,6 +48,10 @@ public class SqlConnector implements ISql {
 
     public ObservableList<Kunde> getDataKunde() {
         return dataKunde;
+    }
+
+    public ObservableList<Angebot> getDataRechnung() {
+        return dataRechnung;
     }
 
     public ObservableList<Angebot> getDataAngebot() {
@@ -60,6 +68,10 @@ public class SqlConnector implements ISql {
 
     public ObservableList<Angebot> getDataFilteredAngebot() {
         return dataFilteredAngebot;
+    }
+
+    public ObservableList<Angebot> getDataFilteredRechnung() {
+        return dataFilteredRechnung;
     }
 
     public ObservableList<Artikel> getDataFilteredArtikel() {
@@ -145,6 +157,26 @@ public class SqlConnector implements ISql {
                             "ja/Rechnung erstellt"));
                 }
             }
+        } catch (SQLException exc) {
+            throw exc;
+        }
+    }
+
+    @Override
+    public void loadDataRechnung() throws SQLException {
+        try {
+
+            loadDataAngebot();
+            for (Angebot a : dataAngebot) {
+                if (a.getAkzeptiert().equals("1")) {
+                    dataRechnung.add(new Angebot(
+                            a.getAngebotsnummer(),
+                            a.getKunde(),
+                            a.getDatum(),
+                            "ja/Rechnung erstellt"));
+                }
+            }
+
         } catch (SQLException exc) {
             throw exc;
         }
@@ -261,6 +293,38 @@ public class SqlConnector implements ISql {
         } finally {
             if (rsSearchAngebot != null) {
                 rsSearchAngebot.close();
+            }
+        }
+    }
+
+    @Override
+    public void loadFilteredRechnung(String filter) throws SQLException {
+        String searchRechnungString = "select * from angebot where angebotsnummer like ? or kunde like ? or datum like ?;";
+        ResultSet rsSearchRechnung = null;
+
+        try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
+                PreparedStatement stmtSearchRechnung = myConn.prepareStatement(searchRechnungString)) {
+
+            dataFilteredRechnung.clear();
+
+            stmtSearchRechnung.setString(1, "%" + filter + "%");
+            stmtSearchRechnung.setString(2, "%" + filter + "%");
+            stmtSearchRechnung.setString(3, "%" + filter + "%");
+            rsSearchRechnung = stmtSearchRechnung.executeQuery();
+
+            while (rsSearchRechnung.next()) {
+                dataFilteredAngebot.add(new Angebot(
+                        rsSearchRechnung.getString("angebotsnummer"),
+                        rsSearchRechnung.getString("kunde"),
+                        rsSearchRechnung.getString("datum"),
+                        "ja/Rechnung erstellt"));
+            }
+
+        } catch (SQLException exc) {
+            throw exc;
+        } finally {
+            if (rsSearchRechnung != null) {
+                rsSearchRechnung.close();
             }
         }
     }
@@ -500,4 +564,10 @@ public class SqlConnector implements ISql {
             throw exc;
         }
     }
+
+    /*private String generateRandomNumber() throws SQLException {
+        String randomNumber = null;
+        
+        return randomNumber;
+    }*/
 }

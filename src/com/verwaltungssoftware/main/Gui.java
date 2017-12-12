@@ -10,6 +10,12 @@ import com.itextpdf.text.DocumentException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.Locale;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -49,14 +55,28 @@ public class Gui extends Application {
         tableKunde = new TableView<>();
         tableAngebot = new TableView<>();
         tableArtikelInAngebot = new TableView<>();
+        
+        /*UUID test = randomUUID();
+        System.out.println(test);
 
+        DateFormat dateF = new SimpleDateFormat("dd.MM.yyyy");
+        Date date = new Date();
+        System.out.println(dateF.format(date));
+        
+        //Wichtig
+        DateTimeFormatter dateTf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        LocalDate ld = LocalDate.parse("2017-03-03");
+        System.out.println(ld);
+        System.out.println(ld.format(dateTf));
+        ld = ld.plusDays(1);
+        System.out.println(ld.format(dateTf));
+        LocalDate ld2 = LocalDate.now();
+        ld2 = ld2.plusDays(1);
+        System.out.println(ld2);*/
     }
 
     @Override
     public void start(Stage primaryStage) {
-        /*DateFormat dateF = new SimpleDateFormat("yyyy-MM-dd");
-        Date date = new Date();
-        System.out.println(dateF.format(date));*/
         try {
             sql.loadDataKunde();
         } catch (SQLException exc) {
@@ -299,7 +319,11 @@ public class Gui extends Application {
                                 pdf.createDocument(tableAngebot.getSelectionModel().getSelectedItems().get(0).getKunde(), 
                                         tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer(), 
                                         tableAngebot.getSelectionModel().getSelectedItems().get(0).getDatum(),
-                                        "testhinweis ksdhflnlGNlrnnbnBBLAEOL NLLABOnNHhbtniobntrsbb nönbösrbbsrnlbibrhöbrböbsrbb", f);
+                                        "testhinweis ksdhflnlGNlrnnbnBBLAEOL NLLABOnNHhbtniobntrsbb nönbösrbbsrnlbibrhöbrböbsrbb",
+                                        12,
+                                        7,
+                                        2,
+                                        f);
                             } catch (DocumentException | FileNotFoundException | SQLException exc) {
                                 System.out.println(exc.getMessage());
                             }

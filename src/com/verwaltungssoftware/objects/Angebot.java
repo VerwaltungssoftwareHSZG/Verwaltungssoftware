@@ -1,16 +1,20 @@
 package com.verwaltungssoftware.objects;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import javafx.beans.property.SimpleStringProperty;
 
 public class Angebot {
 
     private final SimpleStringProperty angebotsnummer, kunde, datum, akzeptiert;
     //private final ArrayList<Artikel> waren;
-    
+
     public Angebot(String aNummer, String k, String date, String a) {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        LocalDate aDatum = LocalDate.parse(date);
         angebotsnummer = new SimpleStringProperty(aNummer);
         kunde = new SimpleStringProperty(k);
-        datum = new SimpleStringProperty(date);
+        datum = new SimpleStringProperty(aDatum.format(dtf));
         akzeptiert = new SimpleStringProperty(a);
         //waren = new ArrayList<>();
     }
@@ -24,7 +28,9 @@ public class Angebot {
     }
 
     public void setDatum(String d) {
-        datum.set(d);
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        LocalDate aDatum = LocalDate.parse(d);
+        datum.set(aDatum.format(dtf));
     }
 
     public String getDatum() {

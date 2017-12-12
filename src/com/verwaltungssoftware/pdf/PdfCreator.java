@@ -19,13 +19,16 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.VerticalPositionMark;
 import com.verwaltungssoftware.main.Gui;
+import com.verwaltungssoftware.objects.Angebot;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
-public class PdfCreator implements IPdf {
+public class PdfCreator {
 
     private Document document;
     private User user;
@@ -39,8 +42,7 @@ public class PdfCreator implements IPdf {
         gui = g;
     }
 
-    @Override
-    public void createDocument(String kunde, String angebot, String datum, String hinweis, File f) throws DocumentException, FileNotFoundException, SQLException {
+    public void createDocument(String kunde, String angebot, String datum, String hinweis, int zahlungsziel, int skontoZeit, double skontoBetrag, File f) throws DocumentException, FileNotFoundException, SQLException {
         if (document.isOpen() == false) {
             document = new Document();
         }
@@ -51,7 +53,7 @@ public class PdfCreator implements IPdf {
             document.open();
 
             loadHeaderData(kunde, angebot, datum, hinweis, file);
-            loadTableData(angebot);
+            loadTableData(angebot, zahlungsziel, skontoZeit, skontoBetrag);
 
             document.close();
             writer.close();
@@ -60,13 +62,13 @@ public class PdfCreator implements IPdf {
         }
     }
 
-    @Override
-    public void loadHeaderData(String kundennummer, String angebotsnummer, String datum, String hinweis, File file) throws DocumentException, FileNotFoundException {
+    public void loadHeaderData(String kundennummer, String angebotsnummer, String datum, String hinweis, File file) throws SQLException, DocumentException, FileNotFoundException {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(file));
 
             document.open();
 
+            //company/Überschrift
             Font chapterFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
             PdfPTable company = new PdfPTable(1);
             company.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -151,7 +153,16 @@ public class PdfCreator implements IPdf {
             pDatum.setFont(boxInfoFont);
             pDatum.add("Datum:");
             pDatum.add(chDatum);
-            pDatum.add(datum);
+            //Datum richtig formattieren
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            LocalDate angebotDatum = null;
+            sql.loadDataAngebot();
+            for(Angebot a: sql.getDataAngebot()){
+                if(a.getAngebotsnummer().equals(angebotsnummer)){
+                    angebotDatum = LocalDate.parse(a.getDatum(), dtf);
+                }
+            }
+            pDatum.add(angebotDatum.format(dtf)); //Meldung kann ignoriert werden, da definitiv ein Datum in der oberen Schleife zugewiesen wird
             cADatum.setPhrase(pDatum);
             cADatum.setUseVariableBorders(true);
             cADatum.setBorderColorTop(BaseColor.WHITE);
@@ -188,13 +199,12 @@ public class PdfCreator implements IPdf {
             pHinweis.setSpacingAfter(11f);
             document.add(pHinweis);
 
-        } catch (DocumentException | FileNotFoundException e2) {
+        } catch (SQLException | DocumentException | FileNotFoundException e2) {
             throw e2;
         }
     }
 
-    @Override
-    public void loadTableData(String angebotsnummer) throws SQLException, DocumentException {
+    public void loadTableData(String angebotsnummer, int zahlungsziel, int skontoZeit, double skontoBetrag) throws SQLException, DocumentException {
         try {
             //Haupttabelle
             float[] est = {1.5f, 3, 5, 3, 4, 2, 4};
@@ -242,13 +252,11 @@ public class PdfCreator implements IPdf {
             double alternativpreis = 0;
             double endpreisNetto = 0;
             double endpreisBrutto = 0;
-            for (Artikel a : sql.getDataArtikelInAngebot()) { 
-            /*TODO: Rabatt nicht als Dezimalstelle darstellen sondern als ganze
+            for (Artikel a : sql.getDataArtikelInAngebot()) {
+                /*TODO: Rabatt nicht als Dezimalstelle darstellen sondern als ganze
                 Zahl (20% etc.) darstellen und auch in der Datenbank so speichern, dann einfach nicht mal Rabattmenge
-                sondern durch 100 mal Rabattmenge
-                ++
-                ISql - Interface kann gestrichen werden, da es sowieso nicht getestet werden muss
-                */
+                sondern durch 100 mal Rabattmenge || genauso bei der Mehrwertsteuer auch noch
+                 */
                 if (a.getAlternative().equals("0")) {
                     table.addCell("#" + count);
                     table.addCell(a.getArtikelnummer());
@@ -302,7 +310,7 @@ public class PdfCreator implements IPdf {
             tableEnd.setWidthPercentage(100);
             tableEnd.setSpacingAfter(5f);
             PdfPCell cNetto = new PdfPCell(new Paragraph("Nettobetrag", fontEnde));
-            PdfPCell cMehrwert = new PdfPCell(new Paragraph("Mehrwertsteuer", fontEnde));
+            PdfPCell cMehrwert = new PdfPCell(new Paragraph("Mehrwertsteuer (MwSt. 19%)", fontEnde));
             PdfPCell cBrutto = new PdfPCell(new Paragraph("Bruttobetrag", fontEnde));
             cNetto.setUseVariableBorders(true);
             cNetto.setBorderColorTop(BaseColor.WHITE);
@@ -325,9 +333,9 @@ public class PdfCreator implements IPdf {
             tableEnd.addCell(cNetto);
             tableEnd.addCell(cMehrwert);
             tableEnd.addCell(cBrutto);
-            PdfPCell cNettoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisNetto), fontEndeWert));
-            PdfPCell cMehrwertWert = new PdfPCell(new Paragraph(String.valueOf(round(mwstGesamt, 2)), fontEndeWert));
-            PdfPCell cBruttoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisBrutto), fontEndeWert));
+            PdfPCell cNettoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisNetto) + " €", fontEndeWert));
+            PdfPCell cMehrwertWert = new PdfPCell(new Paragraph(String.valueOf(round(mwstGesamt, 2)) + " €", fontEndeWert));
+            PdfPCell cBruttoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisBrutto) + " €", fontEndeWert));
             cNettoWert.setUseVariableBorders(true);
             cNettoWert.setBackgroundColor(BaseColor.LIGHT_GRAY);
             cNettoWert.setBorderWidth(0.5f);
@@ -348,14 +356,58 @@ public class PdfCreator implements IPdf {
             tableEnd.addCell(cBruttoWert);
 
             document.add(tableEnd);
+            loadFooterData(12, 7, 2, endpreisBrutto, angebotsnummer);
         } catch (SQLException | DocumentException exc) {
             throw exc;
         }
     }
 
-    @Override
-    public void loadFooterData() {
+    public void loadFooterData(int zahlungsziel, int skontoZeit, double skontoBetrag, double endpreisBrutto, String angebotsnummer) throws DocumentException, SQLException {
+        try {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            LocalDate angebotDatum;
+            LocalDate skontoDatum = null;
+            LocalDate zielDatum = null;
+            sql.loadDataAngebot();
+            for(Angebot a: sql.getDataAngebot()){
+                if(a.getAngebotsnummer().equals(angebotsnummer)){
+                    angebotDatum = LocalDate.parse(a.getDatum(), dtf);
+                    skontoDatum = angebotDatum.plusDays(skontoZeit);
+                    zielDatum = angebotDatum.plusDays(zahlungsziel);
+                }
+            }
+            Font payHeadlineFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
+            PdfPTable termsOfPayment = new PdfPTable(1);
+            termsOfPayment.setHorizontalAlignment(Element.ALIGN_CENTER);
+            termsOfPayment.setWidthPercentage(100);
+            termsOfPayment.setSpacingAfter(5f);
+            Chunk chunk1 = new Chunk("Zahlungsbedingungen: ", payHeadlineFont);
+            Paragraph paragraph1 = new Paragraph(chunk1);
+            PdfPCell payC1 = new PdfPCell(paragraph1);
+            Font payFont = FontFactory.getFont(FontFactory.HELVETICA, 7);
+            PdfPCell payC2 = new PdfPCell(new Paragraph("Zahlungsziel " + zahlungsziel + " Netto, " + skontoZeit + " Tage " + skontoBetrag + "% Skonto.", payFont));
+            PdfPCell payC3 = new PdfPCell(new Paragraph("Die Ware bleibt unser Eigentum bis zur vollständigen Bezahlung.\nDienstleistungen sind nicht skontierfähig.", payFont));
+            PdfPCell payC4 = new PdfPCell(new Paragraph("entspricht:            " + round(endpreisBrutto*(1-(skontoBetrag/100)), 2) + " € bis: " + skontoDatum.format(dtf) + ",         " + endpreisBrutto + " € bis: " + zielDatum.format(dtf), payFont));
 
+            payC1.setBorderColor(BaseColor.WHITE);
+            payC2.setBorderColor(BaseColor.WHITE);
+            payC3.setBorderColor(BaseColor.WHITE);
+            payC4.setBorderColor(BaseColor.WHITE);
+            termsOfPayment.addCell(payC1);
+            termsOfPayment.addCell(payC2);
+            termsOfPayment.addCell(payC3);
+            termsOfPayment.addCell(payC4);
+            document.add(termsOfPayment);
+            
+            Font zahlungInfoFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+            Paragraph pHinweis = new Paragraph("Wir halten den Preis wenn nicht anders vereinbart 4 Kalenderwochen aufrecht, danach bitte erneut anfragen.", zahlungInfoFont);
+            pHinweis.setAlignment(Element.ALIGN_LEFT);
+            pHinweis.setSpacingAfter(5f);
+            document.add(pHinweis);
+            
+        } catch (SQLException | DocumentException exc) {
+            throw exc;
+        }
     }
 
     private double round(double value, int places) {

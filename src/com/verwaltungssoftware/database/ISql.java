@@ -11,6 +11,8 @@ public interface ISql {
     public void loadDataKunde() throws SQLException;
 
     public void loadDataAngebot() throws SQLException;
+    
+    public void loadDataRechnung() throws SQLException;
 
     public void loadArtikelFromAngebot(String nummer) throws SQLException;
 
@@ -29,6 +31,8 @@ public interface ISql {
     public void updateArtikel(String attr, String id, String eingabe) throws SQLException;
     
     public void loadFilteredAngebote(String filter) throws SQLException;
+    
+    public void loadFilteredRechnung(String filter) throws SQLException;
     
     public void loadFilteredKunden(String filter) throws SQLException;
     
