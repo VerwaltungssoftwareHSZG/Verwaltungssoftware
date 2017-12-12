@@ -21,6 +21,8 @@ import com.itextpdf.text.pdf.draw.VerticalPositionMark;
 import com.verwaltungssoftware.main.Gui;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 
 public class PdfCreator implements IPdf {
@@ -194,83 +196,108 @@ public class PdfCreator implements IPdf {
     @Override
     public void loadTableData(String angebotsnummer) throws SQLException, DocumentException {
         try {
+            //Haupttabelle
             float[] est = {1.5f, 3, 5, 3, 4, 2, 4};
             PdfPTable table = new PdfPTable(est);
             table.setWidthPercentage(100);
             table.setSpacingAfter(11f);
-            //table.setSpacingBefore(11f);
-            //table.setSpacingAfter(11f);
-
-            /*dfPCell c0 = new PdfPCell(new Phrase("blubl"));
-                c0.setColspan(7);
-                c0.setHorizontalAlignment(Element.ALIGN_CENTER);
-                table.addCell(c0);*/
             table.getDefaultCell().setBackgroundColor(BaseColor.LIGHT_GRAY);
             table.getDefaultCell().setBorderColor(BaseColor.WHITE);
             table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_CENTER);
             table.getDefaultCell().setPadding(5);
-            for (int i = 0; i < 1; i++) {
-                table.addCell("Pos.");
-                table.addCell("Art.Nr.");
-                table.addCell("Bezeichnung");
-                table.addCell("Menge");
-                table.addCell("Einzelpreis");
-                table.addCell("%");
-                table.addCell("Gesamtpreis");
-            }
+            //HeaderSpalten der Haupttabelle
+            table.addCell("Pos.");
+            table.addCell("Art.Nr.");
+            table.addCell("Bezeichnung");
+            table.addCell("Menge");
+            table.addCell("Einzelpreis");
+            table.addCell("%");
+            table.addCell("Gesamtpreis");
+
             table.setHeaderRows(1);
             table.getDefaultCell().setBackgroundColor(BaseColor.WHITE);
             table.getDefaultCell().setBorderColor(BaseColor.WHITE);
             table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_CENTER);
             table.getDefaultCell().setPadding(5);
+
+            //AlternativTabelle
+            float[] estAlt = {1.5f, 3, 5, 3, 4, 2, 4};
+            PdfPTable tableAlt = new PdfPTable(estAlt);
+            tableAlt.setWidthPercentage(100);
+            tableAlt.setSpacingBefore(5f);
+            tableAlt.setSpacingAfter(11f);
+            tableAlt.getDefaultCell().setBackgroundColor(BaseColor.WHITE);
+            tableAlt.getDefaultCell().setBorderColor(BaseColor.WHITE);
+            tableAlt.getDefaultCell().setHorizontalAlignment(Element.ALIGN_CENTER);
+            tableAlt.getDefaultCell().setPadding(5);
+            //
+
             sql.loadArtikelFromAngebot(angebotsnummer);
             int count = 1; //Nummerierung/Position des Artikels im Angebot/Rechnung
-            double verkaufspreis; //Einzelpreis
-            double menge;
-            double mwstEinzeln;
+            double verkaufspreis = 0; //Einzelpreis
+            double menge = 0;
+            double mwstEinzeln = 0;
             double mwstGesamt = 0;
-            double gesamtpreis; //Verkaufspreis * Menge pro Artikel/Zeile
+            double gesamtpreis = 0; //Verkaufspreis * Menge pro Artikel/Zeile
+            double alternativpreis = 0;
             double endpreisNetto = 0;
             double endpreisBrutto = 0;
-            for (Artikel a : sql.getDataArtikelInAngebot()) {
-                /*TODO : erste if Klammer aus dieser for-Schleife ganz nach oben in die for-Schleife packen
-                alternative Artikel dadurch in eine seperate Liste speichern und am Ende in eine Seperate Tabelle packen
+            for (Artikel a : sql.getDataArtikelInAngebot()) { 
+            /*TODO: Rabatt nicht als Dezimalstelle darstellen sondern als ganze
+                Zahl (20% etc.) darstellen und auch in der Datenbank so speichern, dann einfach nicht mal Rabattmenge
+                sondern durch 100 mal Rabattmenge
+                ++
+                ISql - Interface kann gestrichen werden, da es sowieso nicht getestet werden muss
                 */
-                table.addCell("#" + count);
-                table.addCell(a.getArtikelnummer());
-                table.addCell(a.getBezeichnung() + "\n" + a.getZusatztext());
-                table.addCell(a.getMenge());
-                table.addCell(a.getVerkaufspreis());
-                table.addCell(a.getRabattmenge());
-                verkaufspreis = Double.parseDouble(a.getVerkaufspreis());
-                menge = Double.parseDouble(a.getMenge());
-                //wenn Artikel keine Alternative, also Normalartikel ist
                 if (a.getAlternative().equals("0")) {
+                    table.addCell("#" + count);
+                    table.addCell(a.getArtikelnummer());
+                    table.addCell(a.getBezeichnung() + "\n" + a.getZusatztext());
+                    table.addCell(a.getMenge());
+                    table.addCell(a.getVerkaufspreis());
+                    table.addCell(a.getRabattmenge());
+                    verkaufspreis = Double.parseDouble(a.getVerkaufspreis());
+                    menge = Double.parseDouble(a.getMenge());
                     //wenn kein Rabatt besteht
-                    if(a.getRabattmenge() == null){
-                    gesamtpreis = verkaufspreis * menge;
-                    } else{ //wenn Rabatt besteht
+                    if (a.getRabattmenge() == null) {
+                        gesamtpreis = verkaufspreis * menge;
+                    } else { //wenn Rabatt besteht
                         gesamtpreis = verkaufspreis * menge * Double.parseDouble(a.getRabattmenge());
                     }
-                } else {
+                    table.addCell(String.valueOf(gesamtpreis));
+                    count++;
+                } else if (a.getAlternative().equals("1")) { //wenn Artikel alternativ ist
                     gesamtpreis = 0;
+                    tableAlt.addCell(" ");
+                    tableAlt.addCell(a.getArtikelnummer());
+                    tableAlt.addCell(a.getBezeichnung() + "\n" + a.getZusatztext());
+                    tableAlt.addCell(a.getMenge());
+                    tableAlt.addCell(a.getVerkaufspreis());
+                    tableAlt.addCell(a.getRabattmenge());
+                    verkaufspreis = Double.parseDouble(a.getVerkaufspreis());
+                    menge = Double.parseDouble(a.getMenge());
+                    if (a.getRabattmenge() == null) {
+                        alternativpreis = verkaufspreis * menge;
+                    } else { //wenn Rabatt besteht
+                        alternativpreis = verkaufspreis * menge * Double.parseDouble(a.getRabattmenge());
+                    }
+                    tableAlt.addCell(String.valueOf(alternativpreis));
                 }
                 mwstEinzeln = gesamtpreis * Double.parseDouble(a.getMwst());
                 mwstGesamt += mwstEinzeln;
                 endpreisNetto += gesamtpreis;
-
-                table.addCell(String.valueOf(gesamtpreis));
-                count++;
             }
             endpreisBrutto = endpreisNetto + mwstGesamt;
 
-            //Paragraph test = new Paragraph(String.valueOf(endpreisNetto));
-            //document.add(test);
+            Font fontAlt = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+            Paragraph pAlt = new Paragraph("Alternativ bieten wir an: ", fontAlt);
             document.add(table);
+            document.add(pAlt);
+            document.add(tableAlt);
 
-            float[] est2 = {2, 2, 2};
             Font fontEnde = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
             Font fontEndeWert = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            float[] est2 = {2, 2, 2};
             PdfPTable tableEnd = new PdfPTable(est2);
             tableEnd.setWidthPercentage(100);
             tableEnd.setSpacingAfter(5f);
@@ -299,7 +326,7 @@ public class PdfCreator implements IPdf {
             tableEnd.addCell(cMehrwert);
             tableEnd.addCell(cBrutto);
             PdfPCell cNettoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisNetto), fontEndeWert));
-            PdfPCell cMehrwertWert = new PdfPCell(new Paragraph(String.valueOf(mwstGesamt), fontEndeWert));
+            PdfPCell cMehrwertWert = new PdfPCell(new Paragraph(String.valueOf(round(mwstGesamt, 2)), fontEndeWert));
             PdfPCell cBruttoWert = new PdfPCell(new Paragraph(String.valueOf(endpreisBrutto), fontEndeWert));
             cNettoWert.setUseVariableBorders(true);
             cNettoWert.setBackgroundColor(BaseColor.LIGHT_GRAY);
@@ -329,5 +356,18 @@ public class PdfCreator implements IPdf {
     @Override
     public void loadFooterData() {
 
+    }
+
+    private double round(double value, int places) {
+        try {
+            if (places < 0) {
+                throw new IllegalArgumentException();
+            }
+        } catch (IllegalArgumentException iae) {
+            System.out.println(iae.getMessage());
+        }
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }
