@@ -12,6 +12,7 @@ import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -22,8 +23,10 @@ import com.verwaltungssoftware.main.Gui;
 import com.verwaltungssoftware.objects.Angebot;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.MalformedURLException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -42,7 +45,7 @@ public class PdfCreator {
         gui = g;
     }
 
-    public void createDocument(String kunde, String angebot, String datum, String hinweis, int zahlungsziel, int skontoZeit, double skontoBetrag, File f) throws DocumentException, FileNotFoundException, SQLException {
+    public void createDocument(String kunde, String angebot, String datum, String hinweis, int zahlungsziel, int skontoZeit, double skontoBetrag, File f) throws DocumentException, IOException, SQLException {
         if (document.isOpen() == false) {
             document = new Document();
         }
@@ -57,7 +60,7 @@ public class PdfCreator {
 
             document.close();
             writer.close();
-        } catch (DocumentException | FileNotFoundException | SQLException e2) {
+        } catch (DocumentException | IOException | SQLException e2) {
             throw e2;
         }
     }
@@ -204,7 +207,7 @@ public class PdfCreator {
         }
     }
 
-    public void loadTableData(String angebotsnummer, int zahlungsziel, int skontoZeit, double skontoBetrag) throws SQLException, DocumentException {
+    public void loadTableData(String angebotsnummer, int zahlungsziel, int skontoZeit, double skontoBetrag) throws SQLException, DocumentException, IOException {
         try {
             //Haupttabelle
             float[] est = {1.5f, 3, 5, 3, 4, 2, 4};
@@ -357,12 +360,12 @@ public class PdfCreator {
 
             document.add(tableEnd);
             loadFooterData(12, 7, 2, endpreisBrutto, angebotsnummer);
-        } catch (SQLException | DocumentException exc) {
+        } catch (SQLException | DocumentException | IOException exc) {
             throw exc;
         }
     }
 
-    public void loadFooterData(int zahlungsziel, int skontoZeit, double skontoBetrag, double endpreisBrutto, String angebotsnummer) throws DocumentException, SQLException {
+    public void loadFooterData(int zahlungsziel, int skontoZeit, double skontoBetrag, double endpreisBrutto, String angebotsnummer) throws DocumentException, SQLException, IOException {
         try {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
             LocalDate angebotDatum;
@@ -380,7 +383,7 @@ public class PdfCreator {
             PdfPTable termsOfPayment = new PdfPTable(1);
             termsOfPayment.setHorizontalAlignment(Element.ALIGN_CENTER);
             termsOfPayment.setWidthPercentage(100);
-            termsOfPayment.setSpacingAfter(5f);
+            termsOfPayment.setSpacingAfter(11f);
             Chunk chunk1 = new Chunk("Zahlungsbedingungen: ", payHeadlineFont);
             Paragraph paragraph1 = new Paragraph(chunk1);
             PdfPCell payC1 = new PdfPCell(paragraph1);
@@ -397,15 +400,74 @@ public class PdfCreator {
             termsOfPayment.addCell(payC2);
             termsOfPayment.addCell(payC3);
             termsOfPayment.addCell(payC4);
-            document.add(termsOfPayment);
             
             Font zahlungInfoFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
-            Paragraph pHinweis = new Paragraph("Wir halten den Preis wenn nicht anders vereinbart 4 Kalenderwochen aufrecht, danach bitte erneut anfragen.", zahlungInfoFont);
-            pHinweis.setAlignment(Element.ALIGN_LEFT);
-            pHinweis.setSpacingAfter(5f);
-            document.add(pHinweis);
+            PdfPCell pHinweis = new PdfPCell(new Paragraph("Wir halten den Preis wenn nicht anders vereinbart 4 Kalenderwochen aufrecht, danach bitte erneut anfragen.", zahlungInfoFont));
+            pHinweis.setBorderColor(BaseColor.WHITE);
             
-        } catch (SQLException | DocumentException exc) {
+            PdfPCell fillerPay = new PdfPCell(new Paragraph(" "));
+            fillerPay.setBorderColor(BaseColor.WHITE);
+            
+            termsOfPayment.addCell(fillerPay);
+            termsOfPayment.addCell(pHinweis);
+            document.add(termsOfPayment);
+            
+            
+            //innere linke Tabelle
+            PdfPTable innerFooterTableLeft = new PdfPTable(1);
+            PdfPCell fIC1 = new PdfPCell(new Paragraph(user.getBankName(), payFont)); fIC1.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC2 = new PdfPCell(new Paragraph("IBAN: " + user.getaIban(), payFont)); fIC2.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC3 = new PdfPCell(new Paragraph("BIC: " + user.getaBic(), payFont)); fIC3.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC4 = new PdfPCell(new Paragraph("Konto Nr.: " + user.getKontoNr(), payFont)); fIC4.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC5 = new PdfPCell(new Paragraph("BLZ: " + user.getBlz(), payFont)); fIC5.setBorderColor(BaseColor.WHITE);
+            innerFooterTableLeft.addCell(fIC1);
+            innerFooterTableLeft.addCell(fIC2);
+            innerFooterTableLeft.addCell(fIC3);
+            innerFooterTableLeft.addCell(fIC4);
+            innerFooterTableLeft.addCell(fIC5);
+            
+            //Bild in der Mitte
+            Image image = Image.getInstance("D:\\Studium\\Semester 3\\Buchhaltungsanwendung\\Vorlagen\\dwaMitglied.jpg");
+            image.setScaleToFitHeight(true);
+            
+            //innere rechte Tabelle
+            PdfPTable innerFooterTableRight1 = new PdfPTable(1);
+            PdfPCell fIRC1 = new PdfPCell(new Paragraph("Steuernummer: ", payFont)); fIRC1.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC2 = new PdfPCell(new Paragraph(user.getSteuerNummer(), payFont)); fIRC2.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC3 = new PdfPCell(new Paragraph("UST-IdNr.:", payFont)); fIRC3.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC4 = new PdfPCell(new Paragraph(user.getUstId(), payFont)); fIRC4.setBorderColor(BaseColor.WHITE);
+            innerFooterTableRight1.addCell(fIRC1);
+            innerFooterTableRight1.addCell(fIRC2);
+            innerFooterTableRight1.addCell(fIRC3);
+            innerFooterTableRight1.addCell(fIRC4);
+            
+            //innere rechte Tabelle 2
+            PdfPTable innerFooterTableRight2 = new PdfPTable(1);
+            PdfPCell fIRC11 = new PdfPCell(new Paragraph(user.getCompany(), payFont)); fIRC11.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC22 = new PdfPCell(new Paragraph(user.getStreet(), payFont)); fIRC22.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC33 = new PdfPCell(new Paragraph(user.getTown(), payFont)); fIRC33.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC44 = new PdfPCell(new Paragraph(user.getCountry(), payFont)); fIRC44.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC55 = new PdfPCell(new Paragraph("Company No. " + user.getCompanyNo(), payFont)); fIRC55.setBorderColor(BaseColor.WHITE);
+            innerFooterTableRight2.addCell(fIRC11);
+            innerFooterTableRight2.addCell(fIRC22);
+            innerFooterTableRight2.addCell(fIRC33);
+            innerFooterTableRight2.addCell(fIRC44);
+            innerFooterTableRight2.addCell(fIRC55);
+            
+            //äußere Tabelle
+            float[] estFoot = {2, 1, 1, 2};
+            PdfPTable footerTable = new PdfPTable(estFoot);
+            footerTable.setHorizontalAlignment(Element.ALIGN_CENTER);
+            footerTable.setWidthPercentage(100);
+            footerTable.getDefaultCell().setBorderColor(BaseColor.WHITE);
+            footerTable.addCell(innerFooterTableLeft);
+            footerTable.addCell(image);
+            footerTable.addCell(innerFooterTableRight1);
+            footerTable.addCell(innerFooterTableRight2);
+           
+            document.add(footerTable);
+                 
+        } catch (SQLException | DocumentException | IOException exc) {
             throw exc;
         }
     }

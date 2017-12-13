@@ -8,14 +8,8 @@ import com.verwaltungssoftware.objects.Artikel;
 import com.verwaltungssoftware.objects.Angebot;
 import com.itextpdf.text.DocumentException;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Locale;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -48,7 +42,7 @@ public class Gui extends Application {
     public Gui() {
         user = new User("Sparkasse Oberlausitz Niederschlesien", "3100011383", "85050100", "207/146/00045", "DE 251622660", "Baustoffhandel TONAS Limited", "69 Great Hamton Street", "B18 6EW Birmingham",
                 "Registered in England and Wales", "5802531", "Urs", "Kohler",
-                "Jahnring 6a", "02959", "Deutschland", "Schleife", "0152-56840139", "035773-73297", "Sparkasse Oberlausitz Niederschlesien", "", "DE37 8505 0100 3100 0113 83", "Amtsgericht Dresden", "HRB 24647");
+                "Jahnring 6a", "02959", "Deutschland", "Schleife", "0152-56840139", "035773-73297", "Sparkasse Oberlausitz Niederschlesien", "WELADED1GRL", "DE37 8505 0100 3100 0113 83", "Amtsgericht Dresden", "HRB 24647");
         sql = new SqlConnector();
         pdf = new PdfCreator(user, this, sql);
         tableArtikel = new TableView<>();
@@ -324,7 +318,7 @@ public class Gui extends Application {
                                         7,
                                         2,
                                         f);
-                            } catch (DocumentException | FileNotFoundException | SQLException exc) {
+                            } catch (DocumentException | IOException | SQLException exc) {
                                 System.out.println(exc.getMessage());
                             }
                         }
