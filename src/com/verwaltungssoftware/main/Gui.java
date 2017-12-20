@@ -311,8 +311,7 @@ public class Gui extends Application {
                         if (f != null) {
                             try {
                                 pdf.createDocument(tableAngebot.getSelectionModel().getSelectedItems().get(0).getKunde(), 
-                                        tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer(), 
-                                        tableAngebot.getSelectionModel().getSelectedItems().get(0).getDatum(),
+                                        tableAngebot.getSelectionModel().getSelectedItems().get(0).getAngebotsnummer(),
                                         "testhinweis ksdhflnlGNlrnnbnBBLAEOL NLLABOnNHhbtniobntrsbb nönbösrbbsrnlbibrhöbrböbsrbb",
                                         12,
                                         7,

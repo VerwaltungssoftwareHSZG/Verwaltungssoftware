@@ -18,11 +18,13 @@ public interface ISql {
 
     public void safeNewPlz(String p, String o, String l) throws SQLException;
 
-    public void safeNewKunde(String k, String a, String vn, String n, String s, String h, String z, String p, String o, String l) throws SQLException;
+    public void safeNewKunde(String a, String vn, String n, String s, String h, String z, String p, String o, String l) throws SQLException;
 
     public void safeNewArtikel(String aN, String bez, String z, String ra, String sk, String zu, String ePreis, String vPreis, String mwst, String m, String d) throws SQLException;
 
-    public void safeNewAngebot(String a, String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException;
+    public void safeNewAngebot(String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException;
+    
+    public void safeNewRechnung(String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException;
 
     public void safeArtikelInAngebot(String angebot, String artikel, int menge, boolean alt, double r) throws SQLException;
 

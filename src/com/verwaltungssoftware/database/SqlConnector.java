@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Properties;
 import javafx.collections.FXCollections;
@@ -114,7 +116,7 @@ public class SqlConnector implements ISql {
 
         try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
                 Statement stmtKunde = myConn.createStatement();
-                ResultSet rsKunde = stmtKunde.executeQuery("select * from kunde join postleitzahl on kunde.postleitzahl = postleitzahl.plz")) {
+                ResultSet rsKunde = stmtKunde.executeQuery("select * from kunde join postleitzahl on kunde.postleitzahl = postleitzahl.plz order by kundennummer asc")) {
 
             dataKunde.clear();
 
@@ -140,7 +142,7 @@ public class SqlConnector implements ISql {
 
         try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
                 Statement stmtAngebot = myConn.createStatement();
-                ResultSet rsAngebot = stmtAngebot.executeQuery("select * from angebot")) {
+                ResultSet rsAngebot = stmtAngebot.executeQuery("select * from angebot order by angebotsnummer asc")) {
 
             while (rsAngebot.next()) {
                 if (rsAngebot.getString("akzeptiert").equals("0")) {
@@ -370,15 +372,21 @@ public class SqlConnector implements ISql {
     }
 
     @Override
-    public void safeNewKunde(String k, String a, String vn, String n, String s, String h, String z, String p, String o, String l) throws SQLException {
-        String[] parameter = {k, a, vn, n, s, h, z, p, o, l};
+    public void safeNewKunde(String a, String vn, String n, String s, String h, String z, String p, String o, String l) throws SQLException {
         String addStringKunde = "insert into kunde(kundennummer, anrede, vorname, name, straße, hausnummer, zusatz, postleitzahl) values(?, ?, ?, ?, ?, ?, ?, ?);";
-
+        
         try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
                 PreparedStatement addKunde = myConn.prepareStatement(addStringKunde)) {
+ 
             //gewährleistet, dass Postleitzahl vorhanden ist
             safeNewPlz(p, o, l);
-
+            String kNumber = null;
+            loadDataKunde();
+            for(Kunde k: dataKunde){
+                kNumber = k.getKundennummer();
+            }
+            kNumber = generateRandomClientNumber(kNumber);
+            String[] parameter = {kNumber, a, vn, n, s, h, z, p, o, l};
             for (int i = 0; i < 8; i++) {
                 addKunde.setString(i + 1, parameter[i]);
             }
@@ -432,13 +440,14 @@ public class SqlConnector implements ISql {
     }
 
     @Override
-    public void safeNewAngebot(String a, String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException {
+    public void safeNewAngebot(String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException {
 
         Statement stmtCheckKunde = null;
         ResultSet rsCheckKunde = null;
         Statement stmtCheckAngebot = null;
         ResultSet rsCheckAngebot = null;
         PreparedStatement stmtAddAngebot = null;
+        String aNumber = null;
 
         try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo)) {
 
@@ -461,9 +470,11 @@ public class SqlConnector implements ISql {
             }
 
             if (kundeExist == true && angebotExist == false) {
+
+                aNumber = generateRandomOfferNumber(d);
                 String addStringAngebot = "insert into angebot(angebotsnummer, kunde, datum, akzeptiert) values(?, ?, ?, ?);";
                 stmtAddAngebot = myConn.prepareStatement(addStringAngebot);
-                stmtAddAngebot.setString(1, a);
+                stmtAddAngebot.setString(1, aNumber);
                 stmtAddAngebot.setString(2, k);
                 stmtAddAngebot.setString(3, d);
                 stmtAddAngebot.setString(4, ak);
@@ -472,7 +483,7 @@ public class SqlConnector implements ISql {
 
             int countM = 0;
             for (Artikel it : art) {
-                safeArtikelInAngebot(a, it.getArtikelnummer(), m.get(countM), Boolean.parseBoolean(it.getAlternative()), Double.parseDouble(it.getRabattmenge()));
+                safeArtikelInAngebot(aNumber, it.getArtikelnummer(), m.get(countM), Boolean.parseBoolean(it.getAlternative()), Double.parseDouble(it.getRabattmenge()));
                 countM++;
             }
         } catch (SQLException exc) {
@@ -492,6 +503,75 @@ public class SqlConnector implements ISql {
             }
             if (stmtAddAngebot != null) {
                 stmtAddAngebot.close();
+            }
+        }
+    }
+
+    @Override
+    public void safeNewRechnung(String k, String d, String ak, ArrayList<Artikel> art, ArrayList<Integer> m) throws SQLException {
+
+        Statement stmtCheckKunde = null;
+        ResultSet rsCheckKunde = null;
+        Statement stmtCheckRechnung = null;
+        ResultSet rsCheckRechnung = null;
+        PreparedStatement stmtAddRechnung = null;
+
+        String rNumber = null;
+
+        try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo)) {
+
+            //Test ob der Kunde überhaupt existiert
+            stmtCheckKunde = myConn.createStatement();
+            rsCheckKunde = stmtCheckKunde.executeQuery("select kundennummer from kunde;");
+            boolean kundeExist = false;
+            while (rsCheckKunde.next()) {
+                String test = rsCheckKunde.getString("kundennummer");
+                kundeExist = test.equals(k);
+            }
+
+            //Test ob Angebot bereits existiert
+            stmtCheckRechnung = myConn.createStatement();
+            rsCheckRechnung = stmtCheckRechnung.executeQuery("select angebotsnummer from angebot;");
+            boolean rechnungExist = false;
+            while (rsCheckRechnung.next()) {
+                String test = rsCheckRechnung.getString("angebotsnummer");
+                rechnungExist = test.equals(k);
+            }
+
+            if (kundeExist == true && rechnungExist == false) {
+
+                rNumber = generateRandomBillNumber(d);
+                String addStringRechnung = "insert into angebot(angebotsnummer, kunde, datum, akzeptiert) values(?, ?, ?, ?);";
+                stmtAddRechnung = myConn.prepareStatement(addStringRechnung);
+                stmtAddRechnung.setString(1, rNumber);
+                stmtAddRechnung.setString(2, k);
+                stmtAddRechnung.setString(3, d);
+                stmtAddRechnung.setString(4, ak);
+                stmtAddRechnung.executeUpdate();
+            }
+
+            int countM = 0;
+            for (Artikel it : art) {
+                safeArtikelInAngebot(rNumber, it.getArtikelnummer(), m.get(countM), Boolean.parseBoolean(it.getAlternative()), Double.parseDouble(it.getRabattmenge()));
+                countM++;
+            }
+        } catch (SQLException exc) {
+            throw exc;
+        } finally {
+            if (rsCheckKunde != null) {
+                rsCheckKunde.close();
+            }
+            if (stmtCheckKunde != null) {
+                stmtCheckKunde.close();
+            }
+            if (rsCheckRechnung != null) {
+                rsCheckRechnung.close();
+            }
+            if (stmtCheckRechnung != null) {
+                stmtCheckRechnung.close();
+            }
+            if (stmtAddRechnung != null) {
+                stmtAddRechnung.close();
             }
         }
     }
@@ -565,9 +645,162 @@ public class SqlConnector implements ISql {
         }
     }
 
-    /*private String generateRandomNumber() throws SQLException {
-        String randomNumber = null;
-        
-        return randomNumber;
-    }*/
+    /**
+     * Generiert die chronologisch nächste Rechnungsnummer für einen bestimmten
+     * Kunden
+     *
+     * @param letzteRechnung - die letzte gültige Rechnung. kann null sein
+     * @param kunde - Kunde für den die Rechnung bestimmt ist
+     * @param datum - aktuelles Datum
+     * @return neue Rechnungsnummer
+     * @throws SQLException
+     */
+    private String generateRandomBillNumber(String datum) throws SQLException {
+        String stringLetzteRechnungen = "select * from angebot order by angebotsnummer asc;";
+        ResultSet rsLetzteRechnungen = null;
+        String letzteRechnung = null;
+        try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
+                Statement stmtLetzteRechnungen = myConn.createStatement()) {
+
+            rsLetzteRechnungen = stmtLetzteRechnungen.executeQuery(stringLetzteRechnungen);
+
+            while (rsLetzteRechnungen.next()) {
+                dataRechnung.add(new Angebot(
+                        rsLetzteRechnungen.getString("angebotsnummer"),
+                        rsLetzteRechnungen.getString("kunde"),
+                        rsLetzteRechnungen.getString("datum"),
+                        rsLetzteRechnungen.getString("akzeptiert")));
+            }
+            for (Angebot aIt : dataRechnung) {
+                letzteRechnung = aIt.getAngebotsnummer();
+            }
+        } finally {
+            if (rsLetzteRechnungen != null) {
+                rsLetzteRechnungen.close();
+            }
+        }
+
+        String subYear = null;
+        String subNumber = null;
+        String newNumber = null;
+        DateTimeFormatter dateTf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        LocalDate ld = LocalDate.parse(datum, dateTf);
+        if (letzteRechnung != null) {
+            subYear = letzteRechnung.substring(0, 4);
+            if (subYear.equals(String.valueOf(ld.getYear()))) {
+                subNumber = letzteRechnung.substring(5, 10);
+                subNumber = subNumber.replace("0", "");
+                String zeroTemp = "";
+                int number = Integer.parseInt(subNumber);
+                number++; //Nummer um 1 erhöhen
+                subNumber = String.valueOf(number);
+                if (subNumber.length() == 5) { //wenn Länge bereits erreicht
+                    newNumber = subNumber;
+                } else {
+                    for (int i = 0; i < 5; i++) { //5-stellige Ziffer mit Nullen auffüllen
+                        zeroTemp += "0";
+                        newNumber = zeroTemp + subNumber;
+                        if (newNumber.length() == 5) { //Abbruch, wenn vorzeitig fertig ausgefüllt
+                            break;
+                        }
+                    }
+                }
+            } else { //wenn die letzte Rechnung aus dem vorherigen Jahr oder früher stammt
+                subYear = String.valueOf(ld.getYear());
+                newNumber = "00001";
+            }
+        } else {
+            subYear = String.valueOf(ld.getYear());
+            newNumber = "00001";
+        }
+
+        String fullNumber = subYear + "-" + newNumber + "-R";
+        return fullNumber;
+    }
+
+    private String generateRandomOfferNumber(String datum) throws SQLException {
+        String stringLetzteAngebote = "select * from angebot where kunde = ? order by angebotsnummer asc;";
+        ResultSet rsLetzteAngebot = null;
+        String letztesAngebot = null;
+        try (Connection myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Verwaltungssoftware?useSSL=true", userInfo);
+                Statement stmtLetzteRechnungen = myConn.createStatement()) {
+
+            rsLetzteAngebot = stmtLetzteRechnungen.executeQuery(stringLetzteAngebote);
+
+            while (rsLetzteAngebot.next()) {
+                dataAngebot.add(new Angebot(
+                        rsLetzteAngebot.getString("angebotsnummer"),
+                        rsLetzteAngebot.getString("kunde"),
+                        rsLetzteAngebot.getString("datum"),
+                        rsLetzteAngebot.getString("akzeptiert")));
+            }
+            for (Angebot aIt : dataAngebot) {
+                letztesAngebot = aIt.getAngebotsnummer();
+            }
+        } finally {
+            if (rsLetzteAngebot != null) {
+                rsLetzteAngebot.close();
+            }
+        }
+
+        String subYear = null;
+        String subNumber = null;
+        String newNumber = null;
+        DateTimeFormatter dateTf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        LocalDate ld = LocalDate.parse(datum, dateTf);
+        if (letztesAngebot != null) {
+            subYear = letztesAngebot.substring(0, 4);
+            if (subYear.equals(String.valueOf(ld.getYear()))) {
+                subNumber = letztesAngebot.substring(5, 10);
+                subNumber = subNumber.replace("0", "");
+                String zeroTemp = "";
+                int number = Integer.parseInt(subNumber);
+                number++; //Nummer um 1 erhöhen
+                subNumber = String.valueOf(number);
+                if (subNumber.length() == 5) {
+                    newNumber = subNumber;
+                } else {
+                    for (int i = 0; i < 5; i++) { //5-stellige Ziffer mit Nullen auffüllen
+                        zeroTemp += "0";
+                        newNumber = zeroTemp + subNumber;
+                        if (newNumber.length() == 5) { //Abbruch, wenn vorzeitig fertig ausgefüllt
+                            break;
+                        }
+                    }
+                }
+            } else { //wenn die letzte Rechnung aus dem vorherigen Jahr oder früher stammt
+                subYear = String.valueOf(ld.getYear());
+                newNumber = "00001";
+            }
+        } else {
+            subYear = String.valueOf(ld.getYear());
+            newNumber = "00001";
+        }
+
+        String fullNumber = subYear + "-" + newNumber + "-A";
+        return fullNumber;
+    }
+
+    private String generateRandomClientNumber(String kunde) {
+
+        String newKunde = kunde;
+        newKunde = newKunde.replace("0", "");
+        int plusKunde = Integer.parseInt(newKunde);
+        plusKunde++;
+        String newKundeTemp = String.valueOf(plusKunde);
+        String zeroTemp = "";
+        if (newKundeTemp.length() == 5) {
+            newKunde = newKundeTemp;
+        } else {
+            for (int i = 0; i < 5; i++) {
+                zeroTemp += "0";
+                newKunde = zeroTemp + newKundeTemp;
+                if (newKunde.length() == 5) {
+                    break;
+                }
+            }
+        }
+        String fullKunde = "K" + newKunde;
+        return fullKunde;
+    }
 }

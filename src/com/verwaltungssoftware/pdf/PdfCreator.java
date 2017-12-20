@@ -45,7 +45,7 @@ public class PdfCreator {
         gui = g;
     }
 
-    public void createDocument(String kunde, String angebot, String datum, String hinweis, int zahlungsziel, int skontoZeit, double skontoBetrag, File f) throws DocumentException, IOException, SQLException {
+    public void createDocument(String kunde, String angebot, String hinweis, int zahlungsziel, int skontoZeit, double skontoBetrag, File f) throws DocumentException, IOException, SQLException {
         if (document.isOpen() == false) {
             document = new Document();
         }
@@ -55,7 +55,7 @@ public class PdfCreator {
             //PdfWriter writer = PdfCreator.getInstance(document, new FileOutputStream(System.getProperty("user.home") + "/Desktop/blabla.pdf"));
             document.open();
 
-            loadHeaderData(kunde, angebot, datum, hinweis, file);
+            loadHeaderData(kunde, angebot, hinweis, file);
             loadTableData(angebot, zahlungsziel, skontoZeit, skontoBetrag);
 
             document.close();
@@ -65,7 +65,7 @@ public class PdfCreator {
         }
     }
 
-    public void loadHeaderData(String kundennummer, String angebotsnummer, String datum, String hinweis, File file) throws SQLException, DocumentException, FileNotFoundException {
+    public void loadHeaderData(String kundennummer, String angebotsnummer, String hinweis, File file) throws SQLException, DocumentException, FileNotFoundException {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(file));
 
@@ -160,8 +160,8 @@ public class PdfCreator {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy");
             LocalDate angebotDatum = null;
             sql.loadDataAngebot();
-            for(Angebot a: sql.getDataAngebot()){
-                if(a.getAngebotsnummer().equals(angebotsnummer)){
+            for (Angebot a : sql.getDataAngebot()) {
+                if (a.getAngebotsnummer().equals(angebotsnummer)) {
                     angebotDatum = LocalDate.parse(a.getDatum(), dtf);
                 }
             }
@@ -273,7 +273,7 @@ public class PdfCreator {
                     if (a.getRabattmenge() == null) {
                         gesamtpreis = verkaufspreis * menge;
                     } else { //wenn Rabatt besteht
-                        gesamtpreis = verkaufspreis * menge * Double.parseDouble(a.getRabattmenge());
+                        gesamtpreis = verkaufspreis * menge * (Double.parseDouble(a.getRabattmenge()) / 100);
                     }
                     table.addCell(String.valueOf(gesamtpreis));
                     count++;
@@ -303,8 +303,10 @@ public class PdfCreator {
             Font fontAlt = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
             Paragraph pAlt = new Paragraph("Alternativ bieten wir an: ", fontAlt);
             document.add(table);
-            document.add(pAlt);
-            document.add(tableAlt);
+            if (tableAlt.getRows().size() != 0) {
+                document.add(pAlt);
+                document.add(tableAlt);
+            }
 
             Font fontEnde = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
             Font fontEndeWert = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
@@ -372,8 +374,8 @@ public class PdfCreator {
             LocalDate skontoDatum = null;
             LocalDate zielDatum = null;
             sql.loadDataAngebot();
-            for(Angebot a: sql.getDataAngebot()){
-                if(a.getAngebotsnummer().equals(angebotsnummer)){
+            for (Angebot a : sql.getDataAngebot()) {
+                if (a.getAngebotsnummer().equals(angebotsnummer)) {
                     angebotDatum = LocalDate.parse(a.getDatum(), dtf);
                     skontoDatum = angebotDatum.plusDays(skontoZeit);
                     zielDatum = angebotDatum.plusDays(zahlungsziel);
@@ -390,7 +392,7 @@ public class PdfCreator {
             Font payFont = FontFactory.getFont(FontFactory.HELVETICA, 7);
             PdfPCell payC2 = new PdfPCell(new Paragraph("Zahlungsziel " + zahlungsziel + " Netto, " + skontoZeit + " Tage " + skontoBetrag + "% Skonto.", payFont));
             PdfPCell payC3 = new PdfPCell(new Paragraph("Die Ware bleibt unser Eigentum bis zur vollständigen Bezahlung.\nDienstleistungen sind nicht skontierfähig.", payFont));
-            PdfPCell payC4 = new PdfPCell(new Paragraph("entspricht:            " + round(endpreisBrutto*(1-(skontoBetrag/100)), 2) + " € bis: " + skontoDatum.format(dtf) + ",         " + endpreisBrutto + " € bis: " + zielDatum.format(dtf), payFont));
+            PdfPCell payC4 = new PdfPCell(new Paragraph("entspricht:            " + round(endpreisBrutto * (1 - (skontoBetrag / 100)), 2) + " € bis: " + skontoDatum.format(dtf) + ",         " + endpreisBrutto + " € bis: " + zielDatum.format(dtf), payFont));
 
             payC1.setBorderColor(BaseColor.WHITE);
             payC2.setBorderColor(BaseColor.WHITE);
@@ -400,60 +402,73 @@ public class PdfCreator {
             termsOfPayment.addCell(payC2);
             termsOfPayment.addCell(payC3);
             termsOfPayment.addCell(payC4);
-            
+
             Font zahlungInfoFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
             PdfPCell pHinweis = new PdfPCell(new Paragraph("Wir halten den Preis wenn nicht anders vereinbart 4 Kalenderwochen aufrecht, danach bitte erneut anfragen.", zahlungInfoFont));
             pHinweis.setBorderColor(BaseColor.WHITE);
-            
+
             PdfPCell fillerPay = new PdfPCell(new Paragraph(" "));
             fillerPay.setBorderColor(BaseColor.WHITE);
-            
+
             termsOfPayment.addCell(fillerPay);
             termsOfPayment.addCell(pHinweis);
             document.add(termsOfPayment);
-            
-            
+
             //innere linke Tabelle
             PdfPTable innerFooterTableLeft = new PdfPTable(1);
-            PdfPCell fIC1 = new PdfPCell(new Paragraph(user.getBankName(), payFont)); fIC1.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIC2 = new PdfPCell(new Paragraph("IBAN: " + user.getaIban(), payFont)); fIC2.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIC3 = new PdfPCell(new Paragraph("BIC: " + user.getaBic(), payFont)); fIC3.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIC4 = new PdfPCell(new Paragraph("Konto Nr.: " + user.getKontoNr(), payFont)); fIC4.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIC5 = new PdfPCell(new Paragraph("BLZ: " + user.getBlz(), payFont)); fIC5.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC1 = new PdfPCell(new Paragraph(user.getBankName(), payFont));
+            fIC1.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC2 = new PdfPCell(new Paragraph("IBAN: " + user.getaIban(), payFont));
+            fIC2.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC3 = new PdfPCell(new Paragraph("BIC: " + user.getaBic(), payFont));
+            fIC3.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC4 = new PdfPCell(new Paragraph("Konto Nr.: " + user.getKontoNr(), payFont));
+            fIC4.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIC5 = new PdfPCell(new Paragraph("BLZ: " + user.getBlz(), payFont));
+            fIC5.setBorderColor(BaseColor.WHITE);
             innerFooterTableLeft.addCell(fIC1);
             innerFooterTableLeft.addCell(fIC2);
             innerFooterTableLeft.addCell(fIC3);
             innerFooterTableLeft.addCell(fIC4);
             innerFooterTableLeft.addCell(fIC5);
-            
+
             //Bild in der Mitte
             Image image = Image.getInstance("D:\\Studium\\Semester 3\\Buchhaltungsanwendung\\Vorlagen\\dwaMitglied.jpg");
             image.setScaleToFitHeight(true);
-            
+
             //innere rechte Tabelle
             PdfPTable innerFooterTableRight1 = new PdfPTable(1);
-            PdfPCell fIRC1 = new PdfPCell(new Paragraph("Steuernummer: ", payFont)); fIRC1.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIRC2 = new PdfPCell(new Paragraph(user.getSteuerNummer(), payFont)); fIRC2.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIRC3 = new PdfPCell(new Paragraph("UST-IdNr.:", payFont)); fIRC3.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIRC4 = new PdfPCell(new Paragraph(user.getUstId(), payFont)); fIRC4.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC1 = new PdfPCell(new Paragraph("Steuernummer: ", payFont));
+            fIRC1.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC2 = new PdfPCell(new Paragraph(user.getSteuerNummer(), payFont));
+            fIRC2.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC3 = new PdfPCell(new Paragraph("UST-IdNr.:", payFont));
+            fIRC3.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC4 = new PdfPCell(new Paragraph(user.getUstId(), payFont));
+            fIRC4.setBorderColor(BaseColor.WHITE);
             innerFooterTableRight1.addCell(fIRC1);
             innerFooterTableRight1.addCell(fIRC2);
             innerFooterTableRight1.addCell(fIRC3);
             innerFooterTableRight1.addCell(fIRC4);
-            
+
             //innere rechte Tabelle 2
             PdfPTable innerFooterTableRight2 = new PdfPTable(1);
-            PdfPCell fIRC11 = new PdfPCell(new Paragraph(user.getCompany(), payFont)); fIRC11.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIRC22 = new PdfPCell(new Paragraph(user.getStreet(), payFont)); fIRC22.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIRC33 = new PdfPCell(new Paragraph(user.getTown(), payFont)); fIRC33.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIRC44 = new PdfPCell(new Paragraph(user.getCountry(), payFont)); fIRC44.setBorderColor(BaseColor.WHITE);
-            PdfPCell fIRC55 = new PdfPCell(new Paragraph("Company No. " + user.getCompanyNo(), payFont)); fIRC55.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC11 = new PdfPCell(new Paragraph(user.getCompany(), payFont));
+            fIRC11.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC22 = new PdfPCell(new Paragraph(user.getStreet(), payFont));
+            fIRC22.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC33 = new PdfPCell(new Paragraph(user.getTown(), payFont));
+            fIRC33.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC44 = new PdfPCell(new Paragraph(user.getCountry(), payFont));
+            fIRC44.setBorderColor(BaseColor.WHITE);
+            PdfPCell fIRC55 = new PdfPCell(new Paragraph("Company No. " + user.getCompanyNo(), payFont));
+            fIRC55.setBorderColor(BaseColor.WHITE);
             innerFooterTableRight2.addCell(fIRC11);
             innerFooterTableRight2.addCell(fIRC22);
             innerFooterTableRight2.addCell(fIRC33);
             innerFooterTableRight2.addCell(fIRC44);
             innerFooterTableRight2.addCell(fIRC55);
-            
+
             //äußere Tabelle
             float[] estFoot = {2, 1, 1, 2};
             PdfPTable footerTable = new PdfPTable(estFoot);
@@ -464,9 +479,9 @@ public class PdfCreator {
             footerTable.addCell(image);
             footerTable.addCell(innerFooterTableRight1);
             footerTable.addCell(innerFooterTableRight2);
-           
+
             document.add(footerTable);
-                 
+
         } catch (SQLException | DocumentException | IOException exc) {
             throw exc;
         }
