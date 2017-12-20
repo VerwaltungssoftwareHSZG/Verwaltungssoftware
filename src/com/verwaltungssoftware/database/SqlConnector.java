@@ -783,7 +783,7 @@ public class SqlConnector implements ISql {
 
     private String generateRandomClientNumber(String kunde) {
 
-        String newKunde = kunde;
+        String newKunde = kunde.substring(1, 6);
         newKunde = newKunde.replace("0", "");
         int plusKunde = Integer.parseInt(newKunde);
         plusKunde++;
