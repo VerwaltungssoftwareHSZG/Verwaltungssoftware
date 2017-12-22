@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.verwaltungssoftware.GUI;
+package forschungsprojekt;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -23,8 +23,8 @@ import javafx.stage.Stage;
  * @author Lucas
  */
 public class PasswordChange {
-    static Scene passChange;
     public static void display(){
+        Scene passChange;
         Stage popupStage = new Stage();
         
         popupStage.initModality(Modality.APPLICATION_MODAL);

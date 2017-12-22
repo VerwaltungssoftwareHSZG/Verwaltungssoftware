@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.verwaltungssoftware.GUI;
+package forschungsprojekt;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -23,6 +23,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -32,7 +33,10 @@ import javafx.stage.Stage;
  */
 public class GUI_Verwaltungssoftware extends Application {
     Scene loginScreen, mainScreen;
-    
+    VBox kundenT = createTableKunde();
+    VBox artikelT = createTableArtikel();
+    VBox angebotT = createTableAngebot();
+    VBox rechnungT = createTableRechnung();
     @Override
     public void start(Stage primaryStage) {
         
@@ -91,7 +95,18 @@ public class GUI_Verwaltungssoftware extends Application {
         passChange.setOnAction(e -> PasswordChange.display());
         //Lambda mit einem Ausdruck
         changeUser.setOnAction(e -> primaryStage.setScene(loginScreen));
-        close.setOnAction(e -> primaryStage.close());
+        close.setOnAction(e -> {
+            boolean test = ConfirmBox.display("Anwendung schließen", "Wollen Sie die Anwendung wirklich verlassen?");
+            if(test == true){
+                primaryStage.close();
+            }
+        });
+        primaryStage.setOnCloseRequest(e ->{ 
+            boolean test = ConfirmBox.display("Anwendung schließen", "Wollen Sie die Anwendung wirklich verlassen?");
+            if(test == true){
+                primaryStage.close();
+            }else{e.consume();}
+    });
         
         
         MenuItem addKunde = new MenuItem("Hinzufügen");
@@ -101,14 +116,18 @@ public class GUI_Verwaltungssoftware extends Application {
         addKunde.setOnAction(e -> KundenAdd.display());
         
         MenuItem addArtikel = new MenuItem("Hinzufügen");
+        MenuItem addWarengruppe = new MenuItem("Neue Warengruppe");
         MenuItem tableArtikel = new MenuItem("Übersicht anzeigen");
-        artikel.getItems().addAll(addArtikel, tableArtikel);
+        artikel.getItems().addAll(addArtikel, addWarengruppe, tableArtikel);
         
         addArtikel.setOnAction(e -> ArtikelAdd.display());
+        addWarengruppe.setOnAction(e -> ArtikelAdd.display());
         
         MenuItem createAngebot = new MenuItem("Erstellen");
         MenuItem tableAngebot = new MenuItem("Übersicht anzeigen");
         angebot.getItems().addAll(createAngebot, tableAngebot);
+        
+        createAngebot.setOnAction(e -> AngebotAdd.display());
         
         MenuItem createRechnung = new MenuItem("Erstellen");
         MenuItem tableRechnung = new MenuItem("Übersicht anzeigen");
@@ -117,12 +136,10 @@ public class GUI_Verwaltungssoftware extends Application {
         menu.getMenus().addAll(allgemein, kunde, artikel, angebot, rechnung);
         BorderPane pane = new BorderPane();
         pane.setTop(menu);
+        pane.setBottom(null);
         mainScreen = new Scene(pane, 700, 450);
         
-        VBox kundenT = createTableKunde();
-        VBox artikelT = createTableArtikel();
-        VBox angebotT = createTableAngebot();
-        VBox rechnungT = createTableRechnung();
+        
         
         pane.setCenter(kundenT);
         tableArtikel.setOnAction(e -> pane.setCenter(artikelT));
@@ -219,6 +236,18 @@ public class GUI_Verwaltungssoftware extends Application {
     /**
      * @param args the command line arguments
      */
+    public VBox getAngebotTable(){
+        return angebotT;
+    }
+    public VBox getRechnungTable(){
+        return rechnungT;
+    }
+    public VBox getKundenTable(){
+        return kundenT;
+    }
+    public VBox getArtikelTable(){
+        return artikelT;
+    }
     public static void main(String[] args) {
         launch(args);
     }
