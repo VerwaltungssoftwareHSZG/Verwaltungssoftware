@@ -130,6 +130,7 @@ public class GUI_Verwaltungssoftware extends Application {
         createAngebot.setOnAction(e -> AngebotAdd.display());
         
         MenuItem createRechnung = new MenuItem("Erstellen");
+        createRechnung.setOnAction(e -> RechnungsAdd.display());
         MenuItem tableRechnung = new MenuItem("Übersicht anzeigen");
         rechnung.getItems().addAll(createRechnung, tableRechnung);
         

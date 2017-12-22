@@ -27,12 +27,12 @@ import javafx.stage.Stage;
  * @author Lucas
  */
 public class AngebotAdd {
-   static Scene kundenInfo, übernahme, posten, summe;
+   static Scene kundenInfo, übernahme, posten, summen;
      public static void display(){
          String titleK = "Angebot erstellen: Kundendaten";
          String titleÜ = "Angebot erstellen: Übernahme";
          String titleP = "Angebot erstellen: Posten hinzufügen";
-         String titleS = "Angebot erstellen: Summe";
+         String titleS = "Angebot erstellen: Summen";
          
         Stage popupStage = new Stage();
         popupStage.initModality(Modality.APPLICATION_MODAL);
@@ -201,6 +201,10 @@ public class AngebotAdd {
         });
         Button add3 = new Button("Hinzufügen");
         Button con = new Button("Weiter");
+        con.setOnAction(e -> {
+            popupStage.setScene(summen);
+            popupStage.setTitle(titleS);
+        });
         
        VBox labelsLeft = new VBox();
        labelsLeft.getChildren().addAll(artNr, anzahl, nettopreis, summe);
@@ -237,6 +241,79 @@ public class AngebotAdd {
         pane3.setBottom(buttons3);
         
         posten = new Scene(pane3, 700, 500); //ENDE POSTEN
+        
+        Label summe3 = new Label("Summe");
+        Label mwtStr = new Label("Mehrwertsteuer");
+        Label bruttopreis = new Label("Bruttopreis");
+        Label gültig = new Label("Gültig bis");
+        Label fakturatext = new Label("Fakturatext");
+        Label skontotage = new Label("Skontotage");
+        Label skonto = new Label("Skonto in Prozent");
+        Label netto = new Label("Netto");
+        Label skontobetrag = new Label("Skontobetrag");
+        Label skontotext = new Label("Skontotext");
+        
+        TextField summe4 = new TextField();
+        summe4.setEditable(false);
+        TextField mwtStrT = new TextField();
+        mwtStrT.setEditable(false);
+        TextField bruttopreisT = new TextField();
+        bruttopreisT.setEditable(false);
+        TextField gültigT = new TextField();
+        TextField fakturatextT = new TextField();
+        TextField skontotageT = new TextField();
+        TextField skontoT = new TextField();
+        TextField nettoT = new TextField();
+        TextField skontobetragT = new TextField();
+        skontobetragT.setEditable(false);
+        TextField skontotextT = new TextField();
+        
+        Button abort = new Button("Zurück");
+        abort.setOnAction(e -> {
+            popupStage.setScene(posten);
+            popupStage.setTitle(titleP);
+        });
+        Button pdf = new Button("In PDF-Datei umwandeln");
+        Button done = new Button("Abschließen");
+        done.setOnAction(e -> {
+            boolean test = ConfirmBox.display("Angebotserstellung abschließen", "Möchten sie das Angebot wirklich erstellen?");
+            if(test == true){
+                popupStage.close();
+            }else{e.consume();}
+        });
+        
+        VBox labels = new VBox();
+        labels.getChildren().addAll(summe3, mwtStr, bruttopreis, gültig, fakturatext);
+        labels.setPadding(new Insets(10));
+        labels.setSpacing(16);
+        VBox labelsSkonto = new VBox();
+        labelsSkonto.getChildren().addAll(skontotage, skonto, netto, skontobetrag, skontotext);
+        labelsSkonto.setPadding(new Insets(10));
+        labelsSkonto.setSpacing(16);
+        
+        VBox tLeft = new VBox();
+        tLeft.getChildren().addAll(summe4, mwtStrT, bruttopreisT, gültigT, fakturatextT);
+        tLeft.setPadding(new Insets(10));
+        tLeft.setSpacing(8);
+        VBox tRight = new VBox();
+        tRight.getChildren().addAll(skontotageT, skontoT, nettoT, skontobetragT, skontotextT);
+        tRight.setPadding(new Insets(10));
+        tRight.setSpacing(8);
+        
+        HBox leftAndRight = new HBox();
+        leftAndRight.getChildren().addAll(labels, tLeft, labelsSkonto, tRight);
+        
+        HBox buttons4 = new HBox();
+        buttons4.getChildren().addAll(abort, pdf, done);
+        buttons4.setPadding(new Insets(10, 10, 10, 10));
+        buttons4.setSpacing(8);
+        buttons4.setAlignment(Pos.CENTER);
+        
+        BorderPane pane4 = new BorderPane();
+        pane4.setCenter(leftAndRight);
+        pane4.setBottom(buttons4);
+        
+        summen = new Scene(pane4, 600, 250);
         
         popupStage.setScene(kundenInfo);
         popupStage.show();
