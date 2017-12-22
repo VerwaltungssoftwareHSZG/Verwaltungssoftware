@@ -116,7 +116,7 @@ public class GUI_Verwaltungssoftware extends Application {
         addKunde.setOnAction(e -> KundenAdd.display());
         
         MenuItem addArtikel = new MenuItem("Hinzufügen");
-        MenuItem addWarengruppe = new MenuItem("Neue Warengruppe");
+        MenuItem addWarengruppe = new MenuItem("Warengruppen verwalten");
         MenuItem tableArtikel = new MenuItem("Übersicht anzeigen");
         artikel.getItems().addAll(addArtikel, addWarengruppe, tableArtikel);
         

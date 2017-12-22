@@ -36,8 +36,8 @@ public class KundenAdd {
         Button geschKunde = new Button("Geschäftskunde");
         privatkunde.setOnAction(e -> popupStage.setScene(kundeninfoP));
         geschKunde.setOnAction(e -> popupStage.setScene(kundeninfoG));
-        privatkunde.setPadding(new Insets(20, 20, 20, 20));
-        geschKunde.setPadding(new Insets(20, 20, 20, 20));
+        privatkunde.setPrefSize(150, 75);
+        geschKunde.setPrefSize(150, 75);
         
         HBox box = new HBox();
         box.setPadding(new Insets(10, 10, 10, 10));
@@ -48,11 +48,11 @@ public class KundenAdd {
         kundenauswahl = new Scene(box, 200, 150);
         
         Label anrede = new Label("Anrede");
-        Label vorname = new Label("Vorname:");
-        Label nachname = new Label("Nachname:");
-        Label adresse = new Label("Adresse:");
-        Label ort = new Label("Ort:");
-        Label plz = new Label("Postleitzahl:");
+        Label vorname = new Label("Vorname");
+        Label nachname = new Label("Nachname");
+        Label adresse = new Label("Adresse");
+        Label ort = new Label("Ort");
+        Label plz = new Label("Postleitzahl");
         
         String h = "Herr";
         String f = "Frau";
@@ -92,10 +92,10 @@ public class KundenAdd {
         
         kundeninfoP = new Scene(border, 300, 250);
         
-        Label unternehmen = new Label("Name des Unternehmen:");
-        Label hauptsitz = new Label("Adresse des Hauptsitz:");
-        Label ort2 = new Label("Ort:");
-        Label plz2 = new Label("Postleitzahl:");
+        Label unternehmen = new Label("Name des Unternehmen");
+        Label hauptsitz = new Label("Adresse des Hauptsitz");
+        Label ort2 = new Label("Ort");
+        Label plz2 = new Label("Postleitzahl");
         
         TextField unternehmenT = new TextField();
         TextField hauptsitzT = new TextField();

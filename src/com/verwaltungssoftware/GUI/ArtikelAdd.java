@@ -77,7 +77,7 @@ public class ArtikelAdd {
         pane.setCenter(right);
         pane.setBottom(bottom);
         
-        artikelInfo = new Scene(pane, 500, 500);
+        artikelInfo = new Scene(pane, 350, 300);
         popupStage.setScene(artikelInfo);
         popupStage.show();
     }

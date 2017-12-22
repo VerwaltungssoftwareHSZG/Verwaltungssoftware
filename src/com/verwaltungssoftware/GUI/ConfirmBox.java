@@ -30,7 +30,9 @@ public class ConfirmBox {
         
         Label text = new Label(message);
         Button yes = new Button("Ja");
+        yes.setPrefSize(50, 25);
         Button no = new Button("Nein");
+        no.setPrefSize(50, 25);
         
         yes.setOnAction(e -> {
             bool = true;
