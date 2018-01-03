@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package forschungsprojekt;
+package com.verwaltungssoftware.GUI;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -17,6 +17,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -159,11 +160,11 @@ public class GUI_Verwaltungssoftware extends Application {
         rechnungT.setEditable(true);
  
         TableColumn rNummer = new TableColumn("Rechnungsnummer");
-        rNummer.setPrefWidth(130);
         TableColumn rVorname = new TableColumn("Vorname");
         TableColumn rName = new TableColumn("Nachname");
         TableColumn rDatum = new TableColumn("Datum");
         rechnungT.getColumns().addAll(rNummer, rVorname, rName, rDatum);
+        rechnungT.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         VBox fAndT = createFilter(rechnungT);
         
@@ -175,12 +176,12 @@ public class GUI_Verwaltungssoftware extends Application {
         angebotT.setEditable(true);
  
         TableColumn aNummer = new TableColumn("Angebotsnummer");
-        aNummer.setPrefWidth(130);
         TableColumn aVorname = new TableColumn("Vorname");
         TableColumn aName = new TableColumn("Nachname");
         TableColumn datum = new TableColumn("Datum");
         TableColumn accept = new TableColumn("Akzeptiert");
         angebotT.getColumns().addAll(aNummer, aVorname, aName, datum, accept);
+        angebotT.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         VBox fAndT = createFilter(angebotT);
         
@@ -192,12 +193,16 @@ public class GUI_Verwaltungssoftware extends Application {
         artikelT.setEditable(true);
  
         TableColumn name = new TableColumn("Bezeichnung");
-        name.setPrefWidth(150);
         TableColumn nummer = new TableColumn("Artikelnummer");
-        nummer.setPrefWidth(120);
-        TableColumn preis = new TableColumn("Einzelpreis");
+        TableColumn ztext = new TableColumn("Zusatztext");
+        TableColumn warenG = new TableColumn("Warengruppe");
+        TableColumn preisE = new TableColumn("Einkaufpreis");
+        TableColumn preisV = new TableColumn("Verkaufspreis");
         TableColumn bestand = new TableColumn("Bestand");
-        artikelT.getColumns().addAll(name, nummer, preis, bestand);
+        TableColumn rabatt = new TableColumn("Rabattfähig?");
+        TableColumn mehrwertSt = new TableColumn("Mehrwertsteuer");
+        artikelT.getColumns().addAll(name, nummer, ztext, warenG, preisE, preisV, bestand, rabatt, mehrwertSt);
+        artikelT.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         VBox fAndT = createFilter(artikelT);
         
@@ -214,13 +219,14 @@ public class GUI_Verwaltungssoftware extends Application {
         TableColumn ort = new TableColumn("Ort");
         TableColumn plz = new TableColumn("Postleitzahl");
         kundenT.getColumns().addAll(vorname, nachname, adresse, plz, ort);
+        kundenT.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         VBox fAndT = createFilter(kundenT);
         
         return fAndT;
     }
     
-    public VBox createFilter(TableView t){
+    public VBox createFilter(TableView t){ //KANN GENERISCH GEMACHT WERDEN UM CODE ZU SPAREN
         Label filter = new Label("Filter :");
         TextField filterField = new TextField();
         
@@ -232,6 +238,20 @@ public class GUI_Verwaltungssoftware extends Application {
         
         VBox fAndT = new VBox();
         fAndT.getChildren().addAll(filterBox, t);
+        return fAndT;
+    }
+    public VBox createFilterScroll(ScrollPane s){
+        Label filter = new Label("Filter :");
+        TextField filterField = new TextField();
+        
+        HBox filterBox = new HBox();
+        filterBox.setPadding(new Insets(5, 5, 5, 5));
+        filterBox.setSpacing(8);
+        filterBox.setAlignment(Pos.CENTER);
+        filterBox.getChildren().addAll(filter, filterField);
+        
+        VBox fAndT = new VBox();
+        fAndT.getChildren().addAll(filterBox, s);
         return fAndT;
     }
     /**

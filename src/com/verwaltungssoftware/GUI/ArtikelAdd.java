@@ -3,12 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package forschungsprojekt;
+package com.verwaltungssoftware.GUI;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -37,6 +38,8 @@ public class ArtikelAdd {
         Label preis = new Label("Einkaufspreis");
         Label preisV = new Label("Verkaufspreis");
         Label bestand = new Label("Bestand");
+        Label rabatt = new Label("Rabattfähig?");
+        Label mehrwertSt = new Label("Mehrwertsteuer");
         
         
         
@@ -51,6 +54,14 @@ public class ArtikelAdd {
         TextField preisVT = new TextField();
         TextField bestandT = new TextField();
         
+        String n = "19%";
+        String s = "7%";
+        
+        CheckBox rabattC = new CheckBox();
+        ChoiceBox mehrwertC = new ChoiceBox();
+        mehrwertC.getItems().addAll(n, s);
+        mehrwertC.setValue(n);
+        
         Button cancel = new Button("Abbrechen");
         cancel.setOnAction(e -> popupStage.close());
         Button confirm = new Button("Bestätigen");
@@ -63,8 +74,8 @@ public class ArtikelAdd {
         right.setPadding(new Insets(10));
         right.setSpacing(8);
         
-        left.getChildren().addAll(name, ztext, artNr, gruppeL, preis, preisV, bestand);
-        right.getChildren().addAll(nameT, ztextT, artNrT, gruppe, preisET, preisVT, bestandT);
+        left.getChildren().addAll(name, ztext, artNr, gruppeL, preis, preisV, bestand, rabatt, mehrwertSt);
+        right.getChildren().addAll(nameT, ztextT, artNrT, gruppe, preisET, preisVT, bestandT, rabattC, mehrwertC);
         
         HBox bottom = new HBox();
         bottom.getChildren().addAll(cancel, confirm);
@@ -77,7 +88,7 @@ public class ArtikelAdd {
         pane.setCenter(right);
         pane.setBottom(bottom);
         
-        artikelInfo = new Scene(pane, 350, 300);
+        artikelInfo = new Scene(pane, 350, 350);
         popupStage.setScene(artikelInfo);
         popupStage.show();
     }

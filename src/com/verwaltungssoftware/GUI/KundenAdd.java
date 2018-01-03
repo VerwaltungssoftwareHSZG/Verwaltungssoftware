@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package forschungsprojekt;
+package com.verwaltungssoftware.GUI;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -50,9 +50,12 @@ public class KundenAdd {
         Label anrede = new Label("Anrede");
         Label vorname = new Label("Vorname");
         Label nachname = new Label("Nachname");
-        Label adresse = new Label("Adresse");
-        Label ort = new Label("Ort");
+        Label strasse = new Label("Straße");
+        Label hausnummer = new Label("Hausnummer");
         Label plz = new Label("Postleitzahl");
+        Label ort = new Label("Ort");
+        Label land = new Label("Land");
+        Label zusatz = new Label("Zusatz");
         
         String h = "Herr";
         String f = "Frau";
@@ -62,9 +65,12 @@ public class KundenAdd {
         
         TextField vornameT = new TextField();
         TextField nachnameT = new TextField();
-        TextField adresseT = new TextField();
-        TextField ortT = new TextField();
+        TextField strasseT = new TextField();
+        TextField hausnummerT = new TextField();
         TextField plzT = new TextField();
+        TextField ortT = new TextField();
+        TextField landT = new TextField();
+        TextField zusatzT = new TextField();
         
         Button confirm = new Button("Bestätigen");
         confirm.setOnAction(e -> popupStage.close());
@@ -84,23 +90,29 @@ public class KundenAdd {
         hbox.setAlignment(Pos.CENTER);
         
         hbox.getChildren().addAll(back, confirm);
-        left.getChildren().addAll(anrede, vorname, nachname, adresse, ort, plz);
-        right.getChildren().addAll(anredeChoice, vornameT, nachnameT, adresseT, ortT, plzT);
+        left.getChildren().addAll(anrede, vorname, nachname, strasse, hausnummer, plz, ort, land, zusatz);
+        right.getChildren().addAll(anredeChoice, vornameT, nachnameT, strasseT, hausnummerT, plzT, ortT, landT, zusatzT);
         border.setLeft(left);
         border.setCenter(right);
         border.setBottom(hbox);
         
-        kundeninfoP = new Scene(border, 300, 250);
+        kundeninfoP = new Scene(border, 250, 350);
         
         Label unternehmen = new Label("Name des Unternehmen");
-        Label hauptsitz = new Label("Adresse des Hauptsitz");
-        Label ort2 = new Label("Ort");
+        Label strasseHaupt = new Label("Straße des Hauptsitz");
+        Label hausnummer2 = new Label("Hausnummer");
         Label plz2 = new Label("Postleitzahl");
+        Label ort2 = new Label("Ort");
+        Label land2 = new Label("Land");
+        Label zusatz2 = new Label("Zusatz");
         
         TextField unternehmenT = new TextField();
-        TextField hauptsitzT = new TextField();
-        TextField ort2T = new TextField();
+        TextField strasseHauptT = new TextField();
+        TextField hausnummer2T = new TextField();
         TextField plz2T = new TextField();
+        TextField ort2T = new TextField();
+        TextField land2T = new TextField();
+        TextField zusatz2T = new TextField();
         
         Button confirm2 = new Button("Bestätigen");
         confirm2.setOnAction(e -> popupStage.close());
@@ -120,13 +132,13 @@ public class KundenAdd {
         hbox2.setAlignment(Pos.CENTER);
         
         hbox2.getChildren().addAll(back2, confirm2);
-        left2.getChildren().addAll(unternehmen, hauptsitz, ort2, plz2);
-        right2.getChildren().addAll(unternehmenT, hauptsitzT, ort2T, plz2T);
+        left2.getChildren().addAll(unternehmen, strasseHaupt, hausnummer2, plz2, ort2, land2, zusatz2);
+        right2.getChildren().addAll(unternehmenT, strasseHauptT, hausnummer2T, plz2T, ort2T, land2T, zusatz2T);
         border2.setLeft(left2);
         border2.setCenter(right2);
         border2.setBottom(hbox2);
         
-        kundeninfoG = new Scene(border2, 300, 200);
+        kundeninfoG = new Scene(border2, 250, 300);
         
         popupStage.setScene(kundenauswahl);
         popupStage.show();
